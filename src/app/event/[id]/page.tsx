@@ -312,14 +312,16 @@ export default function EventDetailPage() {
                     )}
                   </p>
                 </div>
-                {hackathonSession ? (
-                  <a href={hackathonSession.submitPath} className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase hover:bg-gray-100 transition-colors flex-shrink-0">
-                    Submit Project
-                  </a>
-                ) : (
-                  <span className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase text-[var(--muted)]">
-                    Submit Project
-                  </span>
+{!isOrganizer && (
+                  hackathonSession ? (
+                    <a href={hackathonSession.submitPath} className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase hover:bg-gray-100 transition-colors flex-shrink-0">
+                      Submit Project
+                    </a>
+                  ) : (
+                    <span className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase text-[var(--muted)]">
+                      Submit Project
+                    </span>
+                  )
                 )}
               </div>
 
