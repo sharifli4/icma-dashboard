@@ -64,15 +64,21 @@ export async function createSession(input: CreateHackathonSessionInput): Promise
   };
 }
 
-export async function getSessionById(idRaw: string): Promise<HackathonSessionData> {
-  const id = Number(idRaw);
-  if (!Number.isInteger(id) || id < 1) {
-    throw new HackathonServiceError("Invalid session id", 400);
+export async function getSession(idOrToken: string): Promise<HackathonSessionData> {
+  if (!nonEmptyString(idOrToken)) {
+    throw new HackathonServiceError("Session id or token is required", 400);
   }
 
   const orm = await getORM();
   const em = orm.em.fork();
-  const session = await em.findOne(HackathonSubmissionSession, { id });
+
+  const numericId = Number(idOrToken);
+  const where =
+    Number.isInteger(numericId) && numericId > 0
+      ? { id: numericId }
+      : { token: idOrToken };
+
+  const session = await em.findOne(HackathonSubmissionSession, where);
   if (!session) {
     throw new HackathonServiceError("Session not found", 404);
   }

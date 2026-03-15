@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyHackathonAdmin, readHackathonAdminHeader } from "@/services/hackathon/authService";
 import { HackathonServiceError } from "@/services/hackathon/errors";
-import { getSessionById } from "@/services/hackathon/sessionService";
+import { getSession } from "@/services/hackathon/sessionService";
 
 export const runtime = "nodejs";
 
 type Params = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ token: string }>;
 };
 
 export async function GET(request: NextRequest, { params }: Params) {
   try {
     verifyHackathonAdmin(readHackathonAdminHeader(request));
 
-    const { id } = await params;
-    const data = await getSessionById(id);
+    const { token } = await params;
+    const data = await getSession(token);
     return NextResponse.json({ data });
   } catch (error) {
     if (error instanceof HackathonServiceError) {
