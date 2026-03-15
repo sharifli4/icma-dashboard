@@ -37,20 +37,17 @@ export async function GET(request: NextRequest) {
       if (!session) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
-      const events = await em.find(CommunityEvent, { user: { id: Number(session.user.id) } }, { orderBy: { createdAt: "DESC" } });
+      const events = await em.find<CommunityEvent>("CommunityEvent", { user: { id: Number(session.user.id) } }, { orderBy: { createdAt: "DESC" } });
       return NextResponse.json({ data: events.map(formatEvent) });
     }
-    const events = await em.find<CommunityEvent>("CommunityEvent", { user: { id: Number(session.user.id) } }, { orderBy: { createdAt: "DESC" } });
+
+    const events = await em.find<CommunityEvent>("CommunityEvent", { status: "LIVE" }, { orderBy: { createdAt: "DESC" } });
     return NextResponse.json({ data: events.map(formatEvent) });
   } catch (error) {
     console.error("[GET /api/events] Error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    const stack = error instanceof Error ? error.stack : undefined;
-    return NextResponse.json({ error: message, stack }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  const events = await em.find<CommunityEvent>("CommunityEvent", { status: "LIVE" }, { orderBy: { createdAt: "DESC" } });
-  return NextResponse.json({ data: events.map(formatEvent) });
 }
 
 // POST create event (auth required)
