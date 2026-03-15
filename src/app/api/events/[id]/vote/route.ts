@@ -2,20 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getORM } from "@/db";
 import type { CommunityEvent } from "@/db/entities/Event";
 import type { EventVote } from "@/db/entities/EventVote";
+import { getClientIp } from "@/lib/ip";
 
 export const runtime = "nodejs";
 
 type Params = { params: Promise<{ id: string }> };
-
-function getClientIp(request: NextRequest): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) {
-    return forwarded.split(",")[0].trim();
-  }
-  const real = request.headers.get("x-real-ip");
-  if (real) return real.trim();
-  return "127.0.0.1";
-}
 
 // GET vote status for this event
 export async function GET(request: NextRequest, { params }: Params) {
@@ -53,16 +44,27 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const existing = await em.findOne<EventVote>("EventVote", { event: { id: eventId }, ipAddress: ip });
 
-  if (existing) {
-    em.remove(existing);
-    event.upvotes = Math.max(0, (event.upvotes ?? 0) - 1);
-    await em.flush();
-    return NextResponse.json({ hasVoted: false, upvotes: event.upvotes });
+  try {
+    if (existing) {
+      em.remove(existing);
+      event.upvotes = Math.max(0, (event.upvotes ?? 0) - 1);
+      await em.flush();
+      return NextResponse.json({ hasVoted: false, upvotes: event.upvotes });
+    }
+
+    const vote = em.create<EventVote>("EventVote", { event, ipAddress: ip });
+    event.upvotes = (event.upvotes ?? 0) + 1;
+    await em.persistAndFlush(vote);
+
+    return NextResponse.json({ hasVoted: true, upvotes: event.upvotes });
+  } catch {
+    // Unique constraint violation from concurrent request — re-read state
+    const freshEm = orm.em.fork();
+    const freshEvent = await freshEm.findOne<CommunityEvent>("CommunityEvent", { id: eventId });
+    const vote = await freshEm.findOne<EventVote>("EventVote", { event: { id: eventId }, ipAddress: ip });
+    return NextResponse.json({
+      hasVoted: !!vote,
+      upvotes: freshEvent?.upvotes ?? 0,
+    });
   }
-
-  const vote = em.create<EventVote>("EventVote", { event, ipAddress: ip });
-  event.upvotes = (event.upvotes ?? 0) + 1;
-  await em.persistAndFlush(vote);
-
-  return NextResponse.json({ hasVoted: true, upvotes: event.upvotes });
 }
