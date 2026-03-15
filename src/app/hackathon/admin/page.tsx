@@ -109,7 +109,7 @@ export default function HackathonAdminPage() {
                 type="text"
                 value={eventName}
                 onChange={(e) => setEventName(e.target.value)}
-                required
+
                 className="w-full border-2 border-[var(--border)] px-4 py-2.5 text-sm font-mono bg-transparent outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 placeholder="e.g. AI Hackathon 2024"
               />
@@ -127,7 +127,7 @@ export default function HackathonAdminPage() {
                   type="datetime-local"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  required
+  
                   className="w-full border-2 border-[var(--border)] px-4 py-2.5 text-sm font-mono bg-transparent outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 />
               </div>
@@ -142,7 +142,7 @@ export default function HackathonAdminPage() {
                   type="datetime-local"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  required
+  
                   className="w-full border-2 border-[var(--border)] px-4 py-2.5 text-sm font-mono bg-transparent outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 />
               </div>

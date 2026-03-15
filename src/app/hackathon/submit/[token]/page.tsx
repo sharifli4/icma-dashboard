@@ -256,7 +256,7 @@ export default function HackathonSubmitPage({ params }: PageProps) {
               type="text"
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
-              required
+
               className="w-full border-2 border-[var(--border)] px-4 py-2.5 text-sm font-mono bg-transparent outline-none focus:ring-2 focus:ring-[var(--accent)]"
               placeholder="Enter your project name..."
             />
@@ -270,7 +270,7 @@ export default function HackathonSubmitPage({ params }: PageProps) {
               type="text"
               value={team}
               onChange={(e) => setTeam(e.target.value)}
-              required
+
               className="w-full border-2 border-[var(--border)] px-4 py-2.5 text-sm font-mono bg-transparent outline-none focus:ring-2 focus:ring-[var(--accent)]"
               placeholder="Enter your team name..."
             />
@@ -284,7 +284,7 @@ export default function HackathonSubmitPage({ params }: PageProps) {
               type="url"
               value={demoUrl}
               onChange={(e) => setDemoUrl(e.target.value)}
-              required
+
               className="w-full border-2 border-[var(--border)] px-4 py-2.5 text-sm font-mono bg-transparent outline-none focus:ring-2 focus:ring-[var(--accent)]"
               placeholder="https://your-demo.example.com"
             />
@@ -298,7 +298,7 @@ export default function HackathonSubmitPage({ params }: PageProps) {
               type="url"
               value={githubUrl}
               onChange={(e) => setGithubUrl(e.target.value)}
-              required
+
               className="w-full border-2 border-[var(--border)] px-4 py-2.5 text-sm font-mono bg-transparent outline-none focus:ring-2 focus:ring-[var(--accent)]"
               placeholder="https://github.com/your-org/your-repo"
             />
