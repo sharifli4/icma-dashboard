@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 function UploadIcon() {
   return (
@@ -22,23 +24,82 @@ function InfoIcon() {
 }
 
 export default function JoinPage() {
+  const router = useRouter();
   const [agreed, setAgreed] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoUrl, setLogoUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Form fields
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const uploadFile = async (file: File) => {
+    setLogoFile(file);
+    setUploading(true);
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: form });
+    const json = await res.json();
+    setUploading(false);
+    if (res.ok) {
+      setLogoUrl(json.data.publicUrl);
+    }
+  };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragActive(false);
     const file = e.dataTransfer.files?.[0];
     if (file && (file.type === "image/png" || file.type === "image/svg+xml")) {
-      if (file.size <= 2 * 1024 * 1024) setLogoFile(file);
+      if (file.size <= 2 * 1024 * 1024) uploadFile(file);
     }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setLogoFile(file);
+    if (file) uploadFile(file);
+  };
+
+  const handleSubmit = async () => {
+    if (!agreed || !name || !email || !password) return;
+    setError("");
+    setLoading(true);
+
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.error || "Registration failed");
+      setLoading(false);
+      return;
+    }
+
+    // Auto sign-in after registration
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    setLoading(false);
+
+    if (result?.error) {
+      setError("Registered but login failed. Please login manually.");
+    } else {
+      router.push("/dashboard");
+      router.refresh();
+    }
   };
 
   return (
@@ -74,6 +135,12 @@ export default function JoinPage() {
           </div>
 
           <hr className="border-t-2 border-[var(--border)] mb-10" />
+
+          {error && (
+            <div className="border-2 border-red-500 bg-red-50 px-4 py-3 text-sm text-red-700 font-bold mb-6 max-w-lg">
+              {error}
+            </div>
+          )}
 
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Left Column - Form */}
@@ -145,6 +212,8 @@ export default function JoinPage() {
                   </label>
                   <input
                     type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     placeholder="Full legal or alias name"
                     className="w-full border-2 border-[var(--border)] px-4 py-3 text-sm bg-white outline-none focus:border-[var(--accent)] transition-colors font-mono"
                   />
@@ -157,6 +226,8 @@ export default function JoinPage() {
                     </label>
                     <input
                       type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       placeholder="admin@domain.io"
                       className="w-full border-2 border-[var(--border)] px-4 py-3 text-sm bg-white outline-none focus:border-[var(--accent)] transition-colors font-mono"
                     />
@@ -167,6 +238,8 @@ export default function JoinPage() {
                     </label>
                     <input
                       type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       className="w-full border-2 border-[var(--border)] px-4 py-3 text-sm bg-white outline-none focus:border-[var(--accent)] transition-colors font-mono"
                     />
@@ -192,11 +265,19 @@ export default function JoinPage() {
 
               {/* Submit */}
               <button
-                disabled={!agreed}
+                onClick={handleSubmit}
+                disabled={!agreed || !name || !email || !password || loading}
                 className="w-full max-w-lg bg-[var(--accent)] border-2 border-[var(--border)] py-4 text-base font-black uppercase tracking-wide hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Register Community
+                {loading ? "Registering..." : "Register Community"}
               </button>
+
+              <p className="mt-4 text-sm text-[var(--muted)]">
+                Already have an account?{" "}
+                <a href="/login" className="font-bold text-[var(--foreground)] underline">
+                  Login here
+                </a>
+              </p>
             </div>
 
             {/* Right Column */}
@@ -217,7 +298,11 @@ export default function JoinPage() {
                   }`}
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  {logoFile ? (
+                  {logoUrl ? (
+                    <img src={logoUrl} alt="Logo preview" className="max-h-28 object-contain" />
+                  ) : uploading ? (
+                    <span className="text-xs font-bold">Uploading...</span>
+                  ) : logoFile ? (
                     <span className="text-xs font-bold text-center px-2 break-all">
                       {logoFile.name}
                     </span>
@@ -282,8 +367,8 @@ export default function JoinPage() {
       {/* Footer */}
       <footer className="border-t-2 border-[var(--border)] px-6 py-4 flex flex-col sm:flex-row items-center justify-between text-xs text-[var(--muted)] bg-white">
         <div className="flex items-center gap-4 mb-2 sm:mb-0">
-          <span className="font-bold text-[var(--accent)]">DISCOVERY.FEED</span>
-          <span>&copy;2024 Discovery_Feed_Network // System_Status: Online</span>
+          <span className="font-bold text-[var(--accent)]">ICMA.IO</span>
+          <span>&copy;2024 ICMA_Network // System_Status: Online</span>
         </div>
         <div className="flex items-center gap-4">
           <a href="#" className="hover:text-[var(--foreground)] transition-colors">
