@@ -4,6 +4,16 @@ import { useState, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { redirect, useRouter } from "next/navigation";
 
+interface HackathonSessionResult {
+  id: number;
+  eventName: string;
+  token: string;
+  submitPath: string;
+  startDate: string;
+  endDate: string;
+  qrCodeSvg: string;
+}
+
 function UploadIcon() {
   return (
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.5">
@@ -19,6 +29,40 @@ function UserIcon() {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="9" y="9" width="13" height="13" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M18 6L6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
+function CodeIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polyline points="16 18 22 12 16 6" />
+      <polyline points="8 6 2 12 8 18" />
     </svg>
   );
 }
@@ -47,11 +91,16 @@ export default function CreateEventPage() {
   const [registrationUrl, setRegistrationUrl] = useState("");
   const [enableSubmissions, setEnableSubmissions] = useState(true);
   const [bannerUrl, setBannerUrl] = useState("");
+  const [submissionDeadline, setSubmissionDeadline] = useState("");
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [hackathonResult, setHackathonResult] = useState<HackathonSessionResult | null>(null);
+  const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isHackathonType = eventType === "Hackathon";
 
   const uploadFile = async (file: File) => {
     setUploading(true);
@@ -80,6 +129,10 @@ export default function CreateEventPage() {
       setError("Please fill in all required fields");
       return;
     }
+    if (isHackathonType && enableSubmissions && !submissionDeadline) {
+      setError("Please set a submission deadline for the hackathon");
+      return;
+    }
     setError("");
     setSubmitting(true);
 
@@ -96,17 +149,39 @@ export default function CreateEventPage() {
         location: location.trim() || null,
         registrationUrl: registrationUrl.trim() || null,
         hackathonEnabled: enableSubmissions,
+        submissionDeadline: submissionDeadline || null,
       }),
     });
 
     setSubmitting(false);
 
     if (res.ok) {
-      router.push("/dashboard");
+      const json = await res.json();
+      if (json.hackathonSession) {
+        setHackathonResult(json.hackathonSession);
+      } else {
+        router.push("/dashboard");
+      }
     } else {
       const json = await res.json();
       setError(json.error || "Failed to create event");
     }
+  };
+
+  const getSubmitUrl = () => {
+    if (!hackathonResult) return "";
+    return `${window.location.origin}${hackathonResult.submitPath}`;
+  };
+
+  const copyToClipboard = async () => {
+    const url = getSubmitUrl();
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCloseModal = () => {
+    router.push("/dashboard");
   };
 
   if (status === "loading") {
@@ -298,7 +373,7 @@ export default function CreateEventPage() {
           </div>
 
           {/* Hackathon Toggle */}
-          <div className="border-2 border-[var(--border)] bg-white px-5 py-4 mb-8 flex items-start gap-3">
+          <div className="border-2 border-[var(--border)] bg-white px-5 py-4 mb-6 flex items-start gap-3">
             <input
               type="checkbox"
               checked={enableSubmissions}
@@ -310,6 +385,34 @@ export default function CreateEventPage() {
               <span className="text-xs text-[var(--muted)]">Allow participants to submit code repositories directly via ICMA.</span>
             </div>
           </div>
+
+          {/* Hackathon Submission Deadline - Shows when Hackathon type and submissions enabled */}
+          {isHackathonType && enableSubmissions && (
+            <div className="border-2 border-[var(--accent)] bg-amber-50 p-5 mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <CodeIcon />
+                <h3 className="text-sm font-black uppercase">Hackathon Configuration</h3>
+              </div>
+              <p className="text-xs text-[var(--muted)] mb-4">
+                A submission link and QR code will be generated after creating this event.
+              </p>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider mb-2">
+                  Project Submission Deadline
+                </label>
+                <input
+                  type="datetime-local"
+                  value={submissionDeadline}
+                  onChange={(e) => setSubmissionDeadline(e.target.value)}
+                  min={dateTime}
+                  className="w-full border-2 border-[var(--border)] px-4 py-3 text-sm bg-white outline-none focus:border-[var(--accent)] transition-colors font-mono"
+                />
+                <p className="text-xs text-[var(--muted)] mt-2">
+                  Participants can submit projects from the event start until this deadline.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Submit */}
           <button
@@ -333,6 +436,87 @@ export default function CreateEventPage() {
           <a href="#" className="hover:text-[var(--foreground)] transition-colors">Terms_of_Service</a>
         </div>
       </footer>
+
+      {/* Hackathon Success Modal */}
+      {hackathonResult && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+          <div className="bg-white border-2 border-[var(--border)] max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b-2 border-[var(--border)] px-5 py-4">
+              <div className="flex items-center gap-2">
+                <CodeIcon />
+                <h2 className="text-lg font-black uppercase">Hackathon Created</h2>
+              </div>
+              <button 
+                onClick={handleCloseModal}
+                className="p-1 hover:bg-gray-100 transition-colors"
+              >
+                <CloseIcon />
+              </button>
+            </div>
+
+            <div className="p-5">
+              <div className="border-2 border-green-500 bg-green-50 px-4 py-3 text-sm text-green-700 font-bold mb-6">
+                Event and hackathon session created successfully!
+              </div>
+
+              <div className="space-y-4 text-sm font-mono mb-6">
+                <div className="flex justify-between items-start">
+                  <span className="text-[var(--muted)]">Event:</span>
+                  <span className="font-bold text-right max-w-[200px]">{hackathonResult.eventName}</span>
+                </div>
+                <div className="flex justify-between items-start">
+                  <span className="text-[var(--muted)]">Submissions Open:</span>
+                  <span className="font-bold">{new Date(hackathonResult.startDate).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-start">
+                  <span className="text-[var(--muted)]">Deadline:</span>
+                  <span className="font-bold">{new Date(hackathonResult.endDate).toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="border-t-2 border-[var(--border)] pt-5">
+                <h3 className="text-xs font-bold uppercase mb-3 text-[var(--muted)]">Submission URL</h3>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={getSubmitUrl()}
+                    className="flex-1 border-2 border-[var(--border)] px-3 py-2 text-sm font-mono bg-gray-50 truncate"
+                  />
+                  <button
+                    onClick={copyToClipboard}
+                    className="border-2 border-[var(--border)] px-4 py-2 text-sm font-bold hover:bg-gray-100 transition-colors flex items-center gap-2 flex-shrink-0"
+                  >
+                    {copied ? <CheckIcon /> : <CopyIcon />}
+                    {copied ? "COPIED" : "COPY"}
+                  </button>
+                </div>
+                <p className="text-xs text-[var(--muted)] mt-2">
+                  Share this link with participants to submit their projects.
+                </p>
+              </div>
+
+              <div className="border-t-2 border-[var(--border)] pt-5 mt-5">
+                <h3 className="text-xs font-bold uppercase mb-4 text-[var(--muted)]">QR Code</h3>
+                <div 
+                  className="flex justify-center p-6 bg-white border-2 border-[var(--border)]"
+                  dangerouslySetInnerHTML={{ __html: hackathonResult.qrCodeSvg }}
+                />
+                <p className="text-xs text-[var(--muted)] text-center mt-3">
+                  Participants can scan this QR code to submit their projects.
+                </p>
+              </div>
+
+              <button
+                onClick={handleCloseModal}
+                className="w-full mt-6 bg-[var(--accent)] border-2 border-[var(--border)] py-3 text-sm font-black uppercase tracking-wide hover:bg-[var(--accent-hover)] transition-colors"
+              >
+                Go to Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

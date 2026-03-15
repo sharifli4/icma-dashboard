@@ -4,6 +4,10 @@ import { authOptions } from "@/lib/auth";
 import { getORM } from "@/db";
 import type { CommunityEvent } from "@/db/entities/Event";
 import type { User } from "@/db/entities/User";
+import type { HackathonSubmissionSession } from "@/db/entities/HackathonSubmissionSession";
+import { randomBytes } from "crypto";
+import { HACKATHON_SUBMIT_PATH_PREFIX } from "@/shared/hackathon/constants";
+import { toQrSvg } from "@/lib/qr";
 
 export const runtime = "nodejs";
 
@@ -58,7 +62,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { title, description, bannerUrl, dateTime, eventType, category, location, registrationUrl, hackathonEnabled } = body;
+  const { title, description, bannerUrl, dateTime, eventType, category, location, registrationUrl, hackathonEnabled, submissionDeadline } = body;
 
   if (!title || !dateTime || !eventType || !category) {
     return NextResponse.json({ error: "Title, date, event type, and category are required" }, { status: 400 });
@@ -84,5 +88,39 @@ export async function POST(request: NextRequest) {
 
   await em.persistAndFlush(event);
 
-  return NextResponse.json({ data: formatEvent(event) }, { status: 201 });
+  let hackathonSession = null;
+
+  if (hackathonEnabled && eventType === "Hackathon") {
+    const token = randomBytes(24).toString("hex");
+    const submitPath = `${HACKATHON_SUBMIT_PATH_PREFIX}/${token}`;
+    const startDate = new Date(dateTime);
+    const endDate = submissionDeadline ? new Date(submissionDeadline) : new Date(new Date(dateTime).getTime() + 24 * 60 * 60 * 1000);
+
+    const hackathonSessionEntity = em.create<HackathonSubmissionSession>("HackathonSubmissionSession", {
+      eventName: title,
+      token,
+      submitPath,
+      startDate,
+      endDate,
+    });
+
+    await em.persistAndFlush(hackathonSessionEntity);
+
+    const qrCodeSvg = await toQrSvg(submitPath);
+
+    hackathonSession = {
+      id: hackathonSessionEntity.id,
+      eventName: hackathonSessionEntity.eventName,
+      token: hackathonSessionEntity.token,
+      submitPath: hackathonSessionEntity.submitPath,
+      startDate: hackathonSessionEntity.startDate.toISOString(),
+      endDate: hackathonSessionEntity.endDate.toISOString(),
+      qrCodeSvg,
+    };
+  }
+
+  return NextResponse.json({ 
+    data: formatEvent(event),
+    hackathonSession,
+  }, { status: 201 });
 }
