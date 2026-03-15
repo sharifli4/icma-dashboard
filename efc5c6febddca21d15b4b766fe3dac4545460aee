@@ -1,0 +1,160 @@
+src/db/entities/CommunityProfile.ts
+  7bafce28985b9aba 8,14,20,23,26,29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "efc5c6febddca21d15b4b766fe3dac4545460aee",
+  "prompts": {
+    "7bafce28985b9aba": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "ede67a3e-e4dd-41a3-bfa2-fccb5dce4f28",
+        "model": "claude-4.5-opus-high"
+      },
+      "human_author": "kenan <kenansharifov400@gmail.com>",
+      "messages": [
+        {
+          "type": "user",
+          "text": "review project security issues",
+          "timestamp": "2026-03-15T11:38:55.052Z"
+        },
+        {
+          "type": "assistant",
+          "text": "I'll review the project for security issues. Let me start by exploring the codebase structure and then examine key security-sensitive areas.",
+          "timestamp": "2026-03-15T11:38:57.932Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Now let me read the key security-sensitive files to identify vulnerabilities.",
+          "timestamp": "2026-03-15T11:39:16.720Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "glob_file_search",
+          "input": {
+            "globPattern": "**/middleware.ts"
+          }
+        },
+        {
+          "type": "assistant",
+          "text": "Now I have enough information to compile a comprehensive security review. Here's my analysis:\n\n---\n\n## Security Review Summary\n\n### Critical Issues\n\n#### 1. **Hackathon Admin Auth Bypassed When API Key Not Set**\n**File:** `src/services/hackathon/authService.ts` (lines 6-9)\n\n```6:14:src/services/hackathon/authService.ts\n  if (!configuredKey) {\n    return;\n  }\n```\n\nIf `HACKATHON_ADMIN_API_KEY` is not configured, the function silently returns without throwing an error, effectively making all admin endpoints **publicly accessible**. This is a severe misconfiguration risk.\n\n**Fix:** Throw an error when the API key is not configured in production.\n\n---\n\n#### 2. **SSL Certificate Validation Disabled**\n**File:** `src/db/mikro-orm.config.ts` (line 12-14)\n\n```8:16:src/db/mikro-orm.config.ts\nexport default defineConfig({\n  entities: [User, HackathonSubmissionSession, HackathonProjectSubmission, CommunityProfile, CommunityEvent],\n  clientUrl: process.env.DATABASE_URL,\n  driverOptions: {\n    connection: {\n      ssl: { rejectUnauthorized: false },\n    },\n  },\n});\n```\n\n`rejectUnauthorized: false` disables SSL certificate verification, making the connection vulnerable to **man-in-the-middle attacks**. This should only be used for development.\n\n---\n\n### High Priority Issues\n\n#### 3. **Missing NEXTAUTH_SECRET Validation**\n**File:** `src/lib/auth.ts` (line 55)\n\n```55:55:src/lib/auth.ts\n  secret: process.env.NEXTAUTH_SECRET,\n```\n\nNo validation that `NEXTAUTH_SECRET` is set. If undefined, NextAuth may use a default or predictable secret, compromising JWT token security.\n\n---\n\n#### 4. **Unauthenticated Hackathon Submission Endpoint (POST)**\n**File:** `src/app/api/hackathon/sessions/[token]/submissions/route.ts` (lines 26-58)\n\nThe `POST` handler for creating submissions does **not require admin authentication** - anyone with a valid session token can submit. While the token acts as a form of authorization, tokens are:\n- Exposed in URLs/QR codes\n- Never expire after the session end date\n- Predictable if someone can guess the 48-character hex format\n\nThis may be intentional, but consider adding rate limiting.\n\n---\n\n#### 5. **No Rate Limiting**\nMultiple endpoints lack rate limiting:\n- Registration endpoint (`/api/auth/register`)\n- Login via NextAuth credentials\n- Hackathon submissions\n- File uploads\n\nThis allows brute-force attacks, credential stuffing, and resource exhaustion.\n\n---\n\n#### 6. **File Upload Extension Bypass Potential**\n**File:** `src/app/api/upload/route.ts` (lines 38-39)\n\n```38:39:src/app/api/upload/route.ts\n  const ext = file.name.split(\".\").pop() || \"png\";\n  const objectKey = `uploads/${crypto.randomUUID()}.${ext}`;\n```\n\nThe file extension comes from user input (`file.name`). While MIME type is validated, a mismatch like `malicious.html` with `image/png` MIME could still be stored with `.html` extension, potentially enabling XSS if the bucket serves files directly.\n\n**Fix:** Derive extension from the validated MIME type, not the filename.\n\n---\n\n### Medium Priority Issues\n\n#### 7. **No Middleware for Route Protection**\nNo `middleware.ts` file exists. All auth checks are done per-route, increasing the risk of missing protection on new routes. Consider implementing centralized middleware.\n\n---\n\n#### 8. **Weak Password Policy**\n**File:** `src/app/api/auth/register/route.ts` (lines 17-22)\n\n```17:22:src/app/api/auth/register/route.ts\n  if (password.length < 6) {\n    return NextResponse.json(\n      { error: \"Password must be at least 6 characters\" },\n      { status: 400 }\n    );\n  }\n```\n\n6 characters is weak. No complexity requirements (uppercase, numbers, symbols).\n\n---\n\n#### 9. **No Input Length Limits**\nVarious endpoints accept string inputs without maximum length validation:\n- `eventName`, `projectName`, `team`, `description` fields\n- Could lead to database storage issues or DoS\n\n---\n\n#### 10. **Token Enumeration Possible**\n**File:** `src/app/api/hackathon/sessions/[token]/status/route.ts`\n\nThe `/status` endpoint is unauthenticated and reveals whether a token exists. Attackers could enumerate valid tokens.\n\n---\n\n### Low Priority / Best Practices\n\n#### 11. **No CORS Configuration**\n`next.config.ts` has no explicit CORS headers. API routes may be callable from any origin.\n\n---\n\n#### 12. **Error Messages Could Leak Info**\n- \"Email already registered\" in `/api/auth/register` enables email enumeration\n- Session not found vs. invalid token errors could help attackers\n\n---\n\n#### 13. **Missing Security Headers**\nNo CSP, X-Frame-Options, X-Content-Type-Options, etc. configured in Next.js config.\n\n---\n\n### Recommendations Summary\n\n| Priority | Issue | Recommendation |\n|----------|-------|----------------|\n| **Critical** | Admin bypass when no API key | Throw error if `HACKATHON_ADMIN_API_KEY` is not set in production |\n| **Critical** | SSL disabled | Enable `rejectUnauthorized: true` in production |\n| **High** | Missing NEXTAUTH_SECRET check | Validate secret exists at startup |\n| **High** | No rate limiting | Add rate limiting (e.g., `@upstash/ratelimit`) |\n| **High** | File extension from user input | Use MIME-to-extension mapping |\n| **Medium** | No middleware | Add centralized auth middleware |\n| **Medium** | Weak password policy | Require 8+ chars, complexity |\n| **Medium** | No input length limits | Add max length validation |\n| **Low** | Missing security headers | Configure in `next.config.ts` |\n| **Low** | Email enumeration | Use generic \"invalid credentials\" messages |\n\nWould you like me to implement fixes for any of these issues?",
+          "timestamp": "2026-03-15T11:39:39.561Z"
+        },
+        {
+          "type": "user",
+          "text": "create migration script for tables",
+          "timestamp": "2026-03-15T11:42:03.058Z"
+        },
+        {
+          "type": "assistant",
+          "text": "I'll explore the existing database setup and create a migration script for the tables.",
+          "timestamp": "2026-03-15T11:42:07.770Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "glob_file_search",
+          "input": {
+            "globPattern": "**/entities/*.ts"
+          }
+        },
+        {
+          "type": "tool_use",
+          "name": "glob_file_search",
+          "input": {
+            "globPattern": "**/migrations/**"
+          }
+        },
+        {
+          "type": "assistant",
+          "text": "Now I have all the entities. I'll create a migrations folder structure and an initial migration script that creates all tables.",
+          "timestamp": "2026-03-15T11:42:19.311Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Now I need to update the MikroORM config to include migrations configuration and add the migrations package:",
+          "timestamp": "2026-03-15T11:42:30.954Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Now let me verify the migration setup works by checking pending migrations:",
+          "timestamp": "2026-03-15T11:43:27.639Z"
+        },
+        {
+          "type": "user",
+          "text": "make it run in app start",
+          "timestamp": "2026-03-15T11:43:48.471Z"
+        },
+        {
+          "type": "assistant",
+          "text": "I'll modify the database initialization to run migrations automatically on app start.",
+          "timestamp": "2026-03-15T11:43:50.827Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Now I need to register the migration in MikroORM. Let me update the config to explicitly import migrations:",
+          "timestamp": "2026-03-15T11:43:59.229Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Done. The migration will now run automatically on app start. Here's what was set up:\n\n**Created:** `src/db/migrations/Migration20260315_Initial.ts` - Initial migration that creates all tables:\n- `user` - User accounts with email/password\n- `community_profile` - Community profiles linked to users\n- `event` - Community events\n- `hackathon_submission_session` - Hackathon sessions with tokens\n- `hackathon_project_submission` - Project submissions\n\n**Modified:** `src/db/index.ts` - Now runs pending migrations automatically when `getORM()` is first called (on first API request).\n\n**Modified:** `src/db/mikro-orm.config.ts` - Added Migrator extension with the migration registered in `migrationsList`.\n\n**Added npm scripts:**\n- `npm run db:migrate` - Run pending migrations\n- `npm run db:migrate:down` - Rollback last migration\n- `npm run db:migrate:pending` - List pending migrations\n- `npm run db:migrate:fresh` - Drop all and re-run migrations\n\nThe app will now automatically run any pending migrations on first database access.",
+          "timestamp": "2026-03-15T11:44:11.654Z"
+        },
+        {
+          "type": "user",
+          "text": "why you skip other migration files?",
+          "timestamp": "2026-03-15T11:44:24.559Z"
+        },
+        {
+          "type": "assistant",
+          "text": "There are no other migration files - the `Migration20260315_Initial.ts` I created is the only one. When I searched earlier, the migrations folder didn't exist:\n\n```\nGlob: **/migrations/** -> 0 files found\n```\n\nI created this as the **initial migration** to set up all existing tables from scratch.\n\nIf you have other migration files that existed before, could you point me to where they are? Or if you want me to change the approach to auto-discover migration files from the folder instead of explicitly listing them, I can do that:",
+          "timestamp": "2026-03-15T11:44:27.838Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Now it uses file-based discovery with `path` and `glob` - any migration file you add to `src/db/migrations/` will be automatically picked up without needing to manually register it in the config.",
+          "timestamp": "2026-03-15T11:44:39.200Z"
+        },
+        {
+          "type": "user",
+          "text": "Error: Please provide either 'type' or 'entity' attribute in o.eventName. If you are using decorators, ensure you have 'emitDecoratorMetadata' enabled in your tsconfig.json.\n    at ignore-listed frames",
+          "timestamp": "2026-03-15T11:46:31.284Z"
+        },
+        {
+          "type": "assistant",
+          "text": "This error occurs because the MikroORM config is being loaded by Next.js which doesn't have decorator metadata support in the same way. The migration file discovery uses file paths that don't work well with Next.js bundling.\n\nLet me switch back to explicit migration registration:",
+          "timestamp": "2026-03-15T11:46:33.540Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Now migrations are explicitly registered via an index file. When you add new migrations, just add them to `src/db/migrations/index.ts`.",
+          "timestamp": "2026-03-15T11:46:45.616Z"
+        },
+        {
+          "type": "user",
+          "text": "still same error",
+          "timestamp": "2026-03-15T11:48:48.423Z"
+        },
+        {
+          "type": "assistant",
+          "text": "The error is about entity metadata, not migrations. Let me check the tsconfig:",
+          "timestamp": "2026-03-15T11:48:51.391Z"
+        },
+        {
+          "type": "assistant",
+          "text": "The tsconfig looks fine. The issue is that Next.js uses SWC which doesn't support `emitDecoratorMetadata`. MikroORM entities need explicit type definitions. Let me check and fix the entities:",
+          "timestamp": "2026-03-15T11:48:59.456Z"
+        },
+        {
+          "type": "assistant",
+          "text": "The entities are missing explicit `type` attributes. Since SWC doesn't emit decorator metadata, MikroORM can't infer the types. Let me fix all entities:",
+          "timestamp": "2026-03-15T11:49:02.603Z"
+        }
+      ],
+      "total_additions": 14,
+      "total_deletions": 14,
+      "accepted_lines": 14,
+      "overriden_lines": 0
+    }
+  }
+}
