@@ -1,11 +1,11 @@
 import { Entity, ManyToOne, OptionalProps, PrimaryKey, Property } from "@mikro-orm/core";
 import { User } from "./User";
 
-@Entity()
+@Entity({ tableName: "community_profile" })
 export class CommunityProfile {
   [OptionalProps]?: "createdAt" | "description" | "logoUrl" | "websiteUrl" | "socialUrl";
 
-  @PrimaryKey({ type: "number" })
+  @PrimaryKey({ type: "int" })
   id!: number;
 
   @ManyToOne(() => User, { unique: true })
