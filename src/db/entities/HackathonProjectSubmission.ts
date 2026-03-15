@@ -1,0 +1,34 @@
+import { Entity, ManyToOne, OptionalProps, PrimaryKey, Property } from "@mikro-orm/core";
+import { HackathonSubmissionSession } from "./HackathonSubmissionSession";
+
+@Entity()
+export class HackathonProjectSubmission {
+  [OptionalProps]?: "createdAt";
+
+  @PrimaryKey()
+  id!: number;
+
+  @ManyToOne(() => HackathonSubmissionSession)
+  session!: HackathonSubmissionSession;
+
+  @Property()
+  projectName!: string;
+
+  @Property()
+  team!: string;
+
+  @Property()
+  demoUrl!: string;
+
+  @Property()
+  demoVideoObjectKey!: string;
+
+  @Property()
+  demoVideoPublicUrl!: string;
+
+  @Property()
+  githubUrl!: string;
+
+  @Property({ onCreate: () => new Date() })
+  createdAt!: Date;
+}
