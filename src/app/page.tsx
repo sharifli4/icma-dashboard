@@ -83,6 +83,7 @@ export default function Home() {
   const [loaded, setLoaded] = useState(false);
   const [votedIds, setVotedIds] = useState<Set<number>>(new Set());
   const [votingId, setVotingId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetch("/api/events")
@@ -127,8 +128,20 @@ export default function Home() {
     );
   };
 
-  const featured = events[0] || null;
-  const upcoming = events.slice(1);
+  const filteredEvents = events.filter((e) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      e.title.toLowerCase().includes(q) ||
+      e.description.toLowerCase().includes(q) ||
+      e.category.toLowerCase().includes(q) ||
+      e.eventType.toLowerCase().includes(q) ||
+      (e.location && e.location.toLowerCase().includes(q))
+    );
+  });
+
+  const featured = filteredEvents[0] || null;
+  const upcoming = filteredEvents.slice(1);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -149,6 +162,8 @@ export default function Home() {
           <input
             type="text"
             placeholder="Search_Events..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="bg-transparent outline-none text-sm font-mono w-full"
           />
         </div>
@@ -290,13 +305,28 @@ export default function Home() {
         <main className="flex-1 p-6 lg:p-8">
           {!loaded ? (
             <div className="py-16 text-center text-sm font-bold text-[var(--muted)]">Loading events...</div>
-          ) : events.length === 0 ? (
+          ) : filteredEvents.length === 0 ? (
             <div className="py-16 text-center">
-              <h2 className="text-2xl font-bold uppercase tracking-tight mb-3">No Events Yet</h2>
-              <p className="text-sm text-[var(--muted)] mb-6">Be the first to create an event on ICMA.IO</p>
-              <a href="/join" className="bg-[var(--accent)] border-2 border-[var(--border)] px-6 py-3 text-sm font-bold hover:bg-[var(--accent-hover)] transition-colors">
-                GET STARTED
-              </a>
+              <h2 className="text-2xl font-bold uppercase tracking-tight mb-3">
+                {searchQuery ? "No Results Found" : "No Events Yet"}
+              </h2>
+              <p className="text-sm text-[var(--muted)] mb-6">
+                {searchQuery
+                  ? `No events matching "${searchQuery}"`
+                  : "Be the first to create an event on ICMA.IO"}
+              </p>
+              {searchQuery ? (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="bg-[var(--accent)] border-2 border-[var(--border)] px-6 py-3 text-sm font-bold hover:bg-[var(--accent-hover)] transition-colors"
+                >
+                  CLEAR SEARCH
+                </button>
+              ) : (
+                <a href="/join" className="bg-[var(--accent)] border-2 border-[var(--border)] px-6 py-3 text-sm font-bold hover:bg-[var(--accent-hover)] transition-colors">
+                  GET STARTED
+                </a>
+              )}
             </div>
           ) : (
             <>
