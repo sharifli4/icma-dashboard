@@ -111,111 +111,191 @@ export default function EventDetailPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        {/* Navbar skeleton */}
-        <header className="border-b-2 border-[var(--border)] px-6 py-3 flex items-center justify-between bg-white">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-gray-200 animate-pulse" />
-            <div className="w-20 h-5 bg-gray-200 animate-pulse rounded" />
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-20 h-9 bg-gray-200 animate-pulse rounded" />
-            <div className="w-24 h-9 bg-gray-200 animate-pulse rounded" />
-          </div>
-        </header>
+  const formattedDate = event
+    ? new Date(event.dateTime).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : "";
 
-        <main className="flex-1 bg-white">
-          <div className="max-w-6xl mx-auto px-6 py-8">
-            <div className="flex flex-col lg:flex-row gap-8">
-              {/* Left column skeleton */}
-              <div className="flex-1">
-                {/* Banner skeleton */}
-                <div className="border-2 border-gray-200 mb-8 overflow-hidden">
-                  <div className="h-48 bg-gray-200 animate-pulse" />
-                  <div className="p-6">
-                    <div className="w-24 h-5 bg-gray-200 animate-pulse rounded mb-3" />
-                    <div className="w-3/4 h-10 bg-gray-200 animate-pulse rounded mb-2" />
-                    <div className="w-1/2 h-10 bg-gray-100 animate-pulse rounded" />
-                  </div>
-                </div>
-
-                {/* Overview skeleton */}
-                <div className="mb-8">
-                  <div className="w-24 h-4 bg-gray-200 animate-pulse rounded mb-3" />
-                  <hr className="border-t-2 border-gray-200 mb-4" />
-                  <div className="space-y-2">
-                    <div className="w-full h-4 bg-gray-100 animate-pulse rounded" />
-                    <div className="w-full h-4 bg-gray-100 animate-pulse rounded" />
-                    <div className="w-5/6 h-4 bg-gray-100 animate-pulse rounded" />
-                    <div className="w-full h-4 bg-gray-100 animate-pulse rounded" />
-                    <div className="w-3/4 h-4 bg-gray-100 animate-pulse rounded" />
-                  </div>
-                </div>
+  function renderContent() {
+    if (loading) {
+      return (
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex-1">
+            <div className="border-2 border-gray-200 mb-8 overflow-hidden">
+              <div className="h-48 bg-gray-200 animate-pulse" />
+              <div className="p-6">
+                <div className="w-24 h-5 bg-gray-200 animate-pulse rounded mb-3" />
+                <div className="w-3/4 h-10 bg-gray-200 animate-pulse rounded mb-2" />
+                <div className="w-1/2 h-10 bg-gray-100 animate-pulse rounded" />
               </div>
-
-              {/* Right sidebar skeleton */}
-              <div className="lg:w-80 flex flex-col gap-4">
-                <div className="h-14 bg-gray-200 animate-pulse rounded border-2 border-gray-200" />
-                <div className="h-14 bg-gray-100 animate-pulse rounded border-2 border-gray-200" />
-
-                {/* Event info skeleton */}
-                <div className="border-2 border-gray-200 p-5">
-                  <div className="w-20 h-3 bg-gray-200 animate-pulse rounded mb-4" />
-                  <hr className="border-t border-gray-100 mb-4" />
-                  <div className="flex flex-col gap-4">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-gray-200 animate-pulse rounded" />
-                        <div>
-                          <div className="w-16 h-2 bg-gray-200 animate-pulse rounded mb-1" />
-                          <div className="w-28 h-4 bg-gray-100 animate-pulse rounded" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Organized by skeleton */}
-                <div className="border-2 border-gray-200 p-5">
-                  <div className="w-24 h-2 bg-gray-200 animate-pulse rounded mb-3" />
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-200 animate-pulse rounded" />
+            </div>
+            <div className="mb-8">
+              <div className="w-24 h-4 bg-gray-200 animate-pulse rounded mb-3" />
+              <hr className="border-t-2 border-gray-200 mb-4" />
+              <div className="space-y-2">
+                <div className="w-full h-4 bg-gray-100 animate-pulse rounded" />
+                <div className="w-full h-4 bg-gray-100 animate-pulse rounded" />
+                <div className="w-5/6 h-4 bg-gray-100 animate-pulse rounded" />
+                <div className="w-full h-4 bg-gray-100 animate-pulse rounded" />
+                <div className="w-3/4 h-4 bg-gray-100 animate-pulse rounded" />
+              </div>
+            </div>
+          </div>
+          <div className="lg:w-80 flex flex-col gap-4">
+            <div className="h-14 bg-gray-200 animate-pulse rounded border-2 border-gray-200" />
+            <div className="h-14 bg-gray-100 animate-pulse rounded border-2 border-gray-200" />
+            <div className="border-2 border-gray-200 p-5">
+              <div className="w-20 h-3 bg-gray-200 animate-pulse rounded mb-4" />
+              <hr className="border-t border-gray-100 mb-4" />
+              <div className="flex flex-col gap-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-gray-200 animate-pulse rounded" />
                     <div>
-                      <div className="w-32 h-4 bg-gray-200 animate-pulse rounded mb-1" />
-                      <div className="w-24 h-2 bg-gray-100 animate-pulse rounded" />
+                      <div className="w-16 h-2 bg-gray-200 animate-pulse rounded mb-1" />
+                      <div className="w-28 h-4 bg-gray-100 animate-pulse rounded" />
                     </div>
                   </div>
+                ))}
+              </div>
+            </div>
+            <div className="border-2 border-gray-200 p-5">
+              <div className="w-24 h-2 bg-gray-200 animate-pulse rounded mb-3" />
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-200 animate-pulse rounded" />
+                <div>
+                  <div className="w-32 h-4 bg-gray-200 animate-pulse rounded mb-1" />
+                  <div className="w-24 h-2 bg-gray-100 animate-pulse rounded" />
                 </div>
               </div>
             </div>
           </div>
-        </main>
-      </div>
-    );
-  }
+        </div>
+      );
+    }
 
-  if (notFound || !event) {
+    if (notFound || !event) {
+      return (
+        <div className="py-24 flex flex-col items-center justify-center">
+          <h1 className="text-3xl font-black uppercase mb-4">Event Not Found</h1>
+          <a href="/" className="border-2 border-[var(--border)] px-6 py-3 text-sm font-bold hover:bg-gray-100 transition-colors">
+            Back to Home
+          </a>
+        </div>
+      );
+    }
+
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <h1 className="text-3xl font-black uppercase mb-4">Event Not Found</h1>
-        <a href="/" className="border-2 border-[var(--border)] px-6 py-3 text-sm font-bold hover:bg-gray-100 transition-colors">
-          Back to Home
-        </a>
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Left Column */}
+        <div className="flex-1">
+          <div className="border-2 border-[var(--border)] mb-8 overflow-hidden">
+            <div className="h-48 relative overflow-hidden bg-gradient-to-br from-gray-300 via-gray-200 to-gray-400">
+              {event.bannerUrl ? (
+                <img src={event.bannerUrl} alt={event.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xs uppercase tracking-widest opacity-50">
+                  Event Banner
+                </div>
+              )}
+            </div>
+            <div className="p-6">
+              <span className="inline-block border-2 border-[var(--border)] px-2 py-0.5 text-[10px] font-bold uppercase mb-3 bg-gray-100">
+                {event.eventType}
+              </span>
+              <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight">
+                {event.title}
+              </h1>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-sm font-bold uppercase tracking-wider mb-3">Overview</h2>
+            <hr className="border-t-2 border-[var(--border)] mb-4" />
+            <p className="text-sm leading-relaxed text-[var(--muted)] whitespace-pre-wrap">
+              {event.description || "No description provided."}
+            </p>
+          </div>
+
+          {event.hackathonEnabled && (
+            <div className="border-2 border-[var(--border)] bg-[#f5f5f5] p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <CodeIcon />
+                  <h3 className="text-base font-black uppercase">Hackathon Mode Active</h3>
+                </div>
+                <p className="text-xs font-bold uppercase text-[var(--muted)]">Submissions are open</p>
+              </div>
+              <a href="#" className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase hover:bg-gray-100 transition-colors flex-shrink-0">
+                Submit Project
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="lg:w-80 flex flex-col gap-4">
+          {event.registrationUrl && (
+            <a href={event.registrationUrl} target="_blank" rel="noopener noreferrer" className="bg-[var(--accent)] border-2 border-[var(--border)] px-6 py-4 text-base font-black uppercase flex items-center justify-center gap-2 hover:bg-[var(--accent-hover)] transition-colors">
+              Register Now
+              <ArrowUpRightIcon />
+            </a>
+          )}
+
+          <button onClick={handleVote} disabled={voting} className={`border-2 px-6 py-4 flex items-center justify-center gap-2 transition-colors cursor-pointer ${hasVoted ? "border-[var(--accent)] bg-[var(--accent)]/20 text-[var(--accent)]" : "border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)]"}`}>
+            <ThumbsUpIcon />
+            <span className="text-sm font-bold">{event.upvotes} {hasVoted ? "Upvoted" : "Upvote"}</span>
+          </button>
+
+          <div className="border-2 border-[var(--border)] p-5">
+            <h3 className="text-xs font-bold uppercase tracking-wider mb-4">Event Info</h3>
+            <hr className="border-t border-gray-200 mb-4" />
+            <div className="flex flex-col gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 border-2 border-[var(--border)] flex items-center justify-center flex-shrink-0"><CalendarIcon /></div>
+                <div>
+                  <span className="block text-[10px] font-bold uppercase text-[var(--muted)]">Date & Time</span>
+                  <span className="text-sm font-bold">{formattedDate}</span>
+                </div>
+              </div>
+              {event.location && (
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 border-2 border-[var(--border)] flex items-center justify-center flex-shrink-0"><LocationIcon /></div>
+                  <div>
+                    <span className="block text-[10px] font-bold uppercase text-[var(--muted)]">Location</span>
+                    <span className="text-sm font-bold">{event.location}</span>
+                  </div>
+                </div>
+              )}
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 border-2 border-[var(--border)] flex items-center justify-center flex-shrink-0"><CategoryIcon /></div>
+                <div>
+                  <span className="block text-[10px] font-bold uppercase text-[var(--muted)]">Category</span>
+                  <span className="text-sm font-bold">{event.category}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-2 border-[var(--border)] p-5">
+            <h3 className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)] mb-3">Organized By</h3>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 border-2 border-[var(--border)] flex items-center justify-center font-black text-sm bg-gray-100">
+                {event.organizer.substring(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <span className="block text-sm font-bold">{event.organizer}</span>
+                <span className="text-[10px] text-[var(--muted)]">Verified Organizer</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
-
-  const formattedDate = new Date(event.dateTime).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Navbar */}
+      {/* Navbar — always visible */}
       <header className="border-b-2 border-[var(--border)] px-6 py-3 flex items-center justify-between bg-white sticky top-0 z-50">
         <a href="/" className="flex items-center gap-2 font-bold text-lg tracking-tight">
           <div className="w-8 h-8 rounded border-2 border-[var(--border)] flex items-center justify-center bg-[var(--accent)]">
@@ -243,154 +323,14 @@ export default function EventDetailPage() {
         </div>
       </header>
 
-      {/* Main */}
+      {/* Main — skeleton or content */}
       <main className="flex-1 bg-white">
         <div className="max-w-6xl mx-auto px-6 py-8">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Left Column */}
-            <div className="flex-1">
-              {/* Hero Banner */}
-              <div className="border-2 border-[var(--border)] mb-8 overflow-hidden">
-                <div className="h-48 relative overflow-hidden bg-gradient-to-br from-gray-300 via-gray-200 to-gray-400">
-                  {event.bannerUrl ? (
-                    <img src={event.bannerUrl} alt={event.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xs uppercase tracking-widest opacity-50">
-                      Event Banner
-                    </div>
-                  )}
-                </div>
-                <div className="p-6">
-                  <span className="inline-block border-2 border-[var(--border)] px-2 py-0.5 text-[10px] font-bold uppercase mb-3 bg-gray-100">
-                    {event.eventType}
-                  </span>
-                  <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight">
-                    {event.title}
-                  </h1>
-                </div>
-              </div>
-
-              {/* Overview */}
-              <div className="mb-8">
-                <h2 className="text-sm font-bold uppercase tracking-wider mb-3">Overview</h2>
-                <hr className="border-t-2 border-[var(--border)] mb-4" />
-                <p className="text-sm leading-relaxed text-[var(--muted)] whitespace-pre-wrap">
-                  {event.description || "No description provided."}
-                </p>
-              </div>
-
-              {/* Hackathon Banner */}
-              {event.hackathonEnabled && (
-                <div className="border-2 border-[var(--border)] bg-[#f5f5f5] p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <CodeIcon />
-                      <h3 className="text-base font-black uppercase">Hackathon Mode Active</h3>
-                    </div>
-                    <p className="text-xs font-bold uppercase text-[var(--muted)]">
-                      Submissions are open
-                    </p>
-                  </div>
-                  <a
-                    href="#"
-                    className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase hover:bg-gray-100 transition-colors flex-shrink-0"
-                  >
-                    Submit Project
-                  </a>
-                </div>
-              )}
-            </div>
-
-            {/* Right Sidebar */}
-            <div className="lg:w-80 flex flex-col gap-4">
-              {/* Register Button */}
-              {event.registrationUrl && (
-                <a
-                  href={event.registrationUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-[var(--accent)] border-2 border-[var(--border)] px-6 py-4 text-base font-black uppercase flex items-center justify-center gap-2 hover:bg-[var(--accent-hover)] transition-colors"
-                >
-                  Register Now
-                  <ArrowUpRightIcon />
-                </a>
-              )}
-
-              {/* Upvotes */}
-              <button
-                onClick={handleVote}
-                disabled={voting}
-                className={`border-2 px-6 py-4 flex items-center justify-center gap-2 transition-colors cursor-pointer ${
-                  hasVoted
-                    ? "border-[var(--accent)] bg-[var(--accent)]/20 text-[var(--accent)]"
-                    : "border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                }`}
-              >
-                <ThumbsUpIcon />
-                <span className="text-sm font-bold">{event.upvotes} {hasVoted ? "Upvoted" : "Upvote"}</span>
-              </button>
-
-              {/* Event Info */}
-              <div className="border-2 border-[var(--border)] p-5">
-                <h3 className="text-xs font-bold uppercase tracking-wider mb-4">Event Info</h3>
-                <hr className="border-t border-gray-200 mb-4" />
-
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 border-2 border-[var(--border)] flex items-center justify-center flex-shrink-0">
-                      <CalendarIcon />
-                    </div>
-                    <div>
-                      <span className="block text-[10px] font-bold uppercase text-[var(--muted)]">Date & Time</span>
-                      <span className="text-sm font-bold">{formattedDate}</span>
-                    </div>
-                  </div>
-
-                  {event.location && (
-                    <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 border-2 border-[var(--border)] flex items-center justify-center flex-shrink-0">
-                        <LocationIcon />
-                      </div>
-                      <div>
-                        <span className="block text-[10px] font-bold uppercase text-[var(--muted)]">Location</span>
-                        <span className="text-sm font-bold">{event.location}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 border-2 border-[var(--border)] flex items-center justify-center flex-shrink-0">
-                      <CategoryIcon />
-                    </div>
-                    <div>
-                      <span className="block text-[10px] font-bold uppercase text-[var(--muted)]">Category</span>
-                      <span className="text-sm font-bold">{event.category}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Organized By */}
-              <div className="border-2 border-[var(--border)] p-5">
-                <h3 className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)] mb-3">
-                  Organized By
-                </h3>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 border-2 border-[var(--border)] flex items-center justify-center font-black text-sm bg-gray-100">
-                    {event.organizer.substring(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <span className="block text-sm font-bold">{event.organizer}</span>
-                    <span className="text-[10px] text-[var(--muted)]">Verified Organizer</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {renderContent()}
         </div>
       </main>
 
-      {/* Footer */}
+      {/* Footer — always visible */}
       <footer className="border-t-2 border-[var(--border)] px-6 py-4 flex flex-col sm:flex-row items-center justify-between text-xs text-[var(--muted)] bg-white">
         <div className="flex items-center gap-4 mb-2 sm:mb-0">
           <span className="font-bold text-[var(--accent)]">ICMA.IO</span>
