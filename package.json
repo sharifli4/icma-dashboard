@@ -6,9 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:create": "mikro-orm schema:create --run",
+    "db:update": "mikro-orm schema:update --run",
+    "db:drop": "mikro-orm schema:drop --run"
+  },
+  "mikro-orm": {
+    "useTsNode": true,
+    "configPaths": ["./src/db/mikro-orm.config.ts"]
   },
   "dependencies": {
+    "@mikro-orm/cli": "^7.0.2",
+    "@mikro-orm/core": "^7.0.2",
+    "@mikro-orm/postgresql": "^7.0.2",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"
