@@ -1,51 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 
 const CATEGORIES = ["AI", "Cybersecurity", "Startups", "Product", "Web3", "Data"];
 const TIMELINE_OPTIONS = ["Today", "This Week", "This Month", "Custom Date"];
 
-const FEATURED_EVENT = {
-  title: "Global AI Summit 2024",
-  description:
-    "Explore the frontier of artificial intelligence with 50+ industry leaders and hands-on workshops.",
-  date: "Oct 24, 2024",
-  location: "San Francisco, CA",
-  likes: "1.2K",
-  tags: ["Featured_01", "Tech_Con"],
-  image: "/globe.svg",
-};
-
-const UPCOMING_EVENTS = [
-  {
-    title: "Defense_Grid_V2",
-    description: "The ultimate cybersecurity challenge for white-hat...",
-    date: "Nov 12, 2024",
-    location: "Berlin, DE",
-    likes: 842,
-    tag: "Hackathon",
-    image: "/events/hackathon.jpg",
-  },
-  {
-    title: "Founder_Meetup_NYC",
-    description: "Connect with fellow founders and early-stage...",
-    date: "Dec 05, 2024",
-    location: "NYC, USA",
-    likes: 315,
-    tag: "Networking",
-    image: "/events/networking.jpg",
-  },
-  {
-    title: "Web3_Architects",
-    description: "Deep dive into smart contract security and dAp...",
-    date: "Jan 15, 2025",
-    location: "London, UK",
-    likes: 562,
-    tag: "Workshop",
-    image: "/events/workshop.jpg",
-  },
-];
+interface EventData {
+  id: number;
+  title: string;
+  description: string;
+  bannerUrl: string | null;
+  dateTime: string;
+  eventType: string;
+  category: string;
+  location: string | null;
+  upvotes: number;
+}
 
 function SearchIcon() {
   return (
@@ -108,12 +79,26 @@ export default function Home() {
   const [activeTimeline, setActiveTimeline] = useState("Today");
   const [activeType, setActiveType] = useState("Event");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [events, setEvents] = useState<EventData[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/events")
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.data) setEvents(json.data);
+        setLoaded(true);
+      });
+  }, []);
 
   const toggleCategory = (cat: string) => {
     setSelectedCategories((prev) =>
       prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
     );
   };
+
+  const featured = events[0] || null;
+  const upcoming = events.slice(1);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -258,129 +243,149 @@ export default function Home() {
 
         {/* Main Content */}
         <main className="flex-1 p-6 lg:p-8">
-          {/* Trending Today */}
-          <div className="mb-10">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-2xl font-bold uppercase tracking-tight">
-                Trending_Today
-              </h2>
-              <div className="flex gap-2">
-                <button className="w-8 h-8 border-2 border-[var(--border)] flex items-center justify-center hover:bg-gray-100 transition-colors">
-                  <ArrowIcon direction="left" />
-                </button>
-                <button className="w-8 h-8 border-2 border-[var(--border)] flex items-center justify-center hover:bg-gray-100 transition-colors">
-                  <ArrowIcon direction="right" />
-                </button>
-              </div>
+          {!loaded ? (
+            <div className="py-16 text-center text-sm font-bold text-[var(--muted)]">Loading events...</div>
+          ) : events.length === 0 ? (
+            <div className="py-16 text-center">
+              <h2 className="text-2xl font-bold uppercase tracking-tight mb-3">No Events Yet</h2>
+              <p className="text-sm text-[var(--muted)] mb-6">Be the first to create an event on ICMA.IO</p>
+              <a href="/join" className="bg-[var(--accent)] border-2 border-[var(--border)] px-6 py-3 text-sm font-bold hover:bg-[var(--accent-hover)] transition-colors">
+                GET STARTED
+              </a>
             </div>
-
-            {/* Featured Card */}
-            <div className="border-2 border-[var(--border)] flex flex-col md:flex-row overflow-hidden">
-              <div className="md:w-1/2 bg-[#0a1628] flex items-center justify-center p-10 min-h-[280px]">
-                <div className="w-48 h-48 rounded-full border border-[#2a4a6b] opacity-60 flex items-center justify-center">
-                  <div className="w-36 h-36 rounded-full border border-[#2a4a6b] opacity-80" />
-                </div>
-              </div>
-              <div className="md:w-1/2 p-6 flex flex-col justify-between">
-                <div>
-                  <div className="flex gap-2 mb-3">
-                    {FEATURED_EVENT.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-0.5 text-xs font-bold border-2 border-[var(--border)] bg-gray-100"
-                      >
-                        {tag.toUpperCase()}
-                      </span>
-                    ))}
-                  </div>
-                  <h3 className="text-2xl font-bold uppercase mb-3 leading-tight">
-                    {FEATURED_EVENT.title}
-                  </h3>
-                  <p className="text-sm text-[var(--muted)] leading-relaxed mb-4">
-                    {FEATURED_EVENT.description}
-                  </p>
-                  <div className="flex items-center gap-4 text-xs text-[var(--muted)] mb-4">
-                    <span className="flex items-center gap-1">
-                      <CalendarIcon />
-                      {FEATURED_EVENT.date}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <LocationIcon />
-                      {FEATURED_EVENT.location}
-                    </span>
-                  </div>
-                </div>
-                <div className="border-t-2 border-[var(--border)] pt-4 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm font-bold">
-                    <ThumbsUpIcon />
-                    {FEATURED_EVENT.likes}
-                  </div>
-                  <button className="bg-[var(--accent)] border-2 border-[var(--border)] px-5 py-2 text-sm font-bold hover:bg-[var(--accent-hover)] transition-colors">
-                    REGISTER_NOW
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Upcoming Events */}
-          <div>
-            <h2 className="text-2xl font-bold uppercase tracking-tight mb-5">
-              Upcoming_Events
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-              {UPCOMING_EVENTS.map((event) => (
-                <div
-                  key={event.title}
-                  className="border-2 border-[var(--border)] flex flex-col overflow-hidden hover:shadow-[4px_4px_0px_var(--border)] transition-shadow"
-                >
-                  <div className="relative bg-gray-200 h-44">
-                    <div className="absolute top-3 right-3">
-                      <span className="px-2 py-0.5 text-xs font-bold border-2 border-[var(--border)] bg-[var(--accent)]">
-                        {event.tag.toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400" />
-                  </div>
-                  <div className="p-4 flex flex-col flex-1">
-                    <h3 className="text-base font-bold uppercase mb-1.5">
-                      {event.title}
-                    </h3>
-                    <p className="text-xs text-[var(--muted)] leading-relaxed mb-3 flex-1">
-                      {event.description}
-                    </p>
-                    <div className="flex items-center gap-3 text-xs text-[var(--muted)] mb-3">
-                      <span className="flex items-center gap-1">
-                        <CalendarIcon />
-                        {event.date}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <LocationIcon />
-                        {event.location}
-                      </span>
-                    </div>
-                    <div className="border-t-2 border-[var(--border)] pt-3 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-sm font-bold">
-                        <ThumbsUpIcon />
-                        {event.likes}
-                      </div>
-                      <button className="border-2 border-[var(--border)] px-3 py-1.5 text-xs font-bold hover:bg-gray-100 transition-colors">
-                        VIEW_DETAILS
+          ) : (
+            <>
+              {/* Trending Today */}
+              {featured && (
+                <div className="mb-10">
+                  <div className="flex items-center justify-between mb-5">
+                    <h2 className="text-2xl font-bold uppercase tracking-tight">
+                      Trending_Today
+                    </h2>
+                    <div className="flex gap-2">
+                      <button className="w-8 h-8 border-2 border-[var(--border)] flex items-center justify-center hover:bg-gray-100 transition-colors">
+                        <ArrowIcon direction="left" />
+                      </button>
+                      <button className="w-8 h-8 border-2 border-[var(--border)] flex items-center justify-center hover:bg-gray-100 transition-colors">
+                        <ArrowIcon direction="right" />
                       </button>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
 
-            {/* Load More */}
-            <div className="flex justify-center mt-8">
-              <button className="bg-[var(--accent)] border-2 border-[var(--border)] px-8 py-3 text-sm font-bold flex items-center gap-2 hover:bg-[var(--accent-hover)] transition-colors">
-                LOAD_MORE_EVENTS
-                <ChevronDownIcon />
-              </button>
-            </div>
-          </div>
+                  {/* Featured Card */}
+                  <div className="border-2 border-[var(--border)] flex flex-col md:flex-row overflow-hidden">
+                    <div className="md:w-1/2 bg-[#0a1628] flex items-center justify-center p-10 min-h-[280px] overflow-hidden">
+                      {featured.bannerUrl ? (
+                        <img src={featured.bannerUrl} alt={featured.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-48 h-48 rounded-full border border-[#2a4a6b] opacity-60 flex items-center justify-center">
+                          <div className="w-36 h-36 rounded-full border border-[#2a4a6b] opacity-80" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="md:w-1/2 p-6 flex flex-col justify-between">
+                      <div>
+                        <div className="flex gap-2 mb-3">
+                          <span className="px-2 py-0.5 text-xs font-bold border-2 border-[var(--border)] bg-gray-100">
+                            {featured.eventType.toUpperCase()}
+                          </span>
+                          <span className="px-2 py-0.5 text-xs font-bold border-2 border-[var(--border)] bg-gray-100">
+                            {featured.category.toUpperCase()}
+                          </span>
+                        </div>
+                        <h3 className="text-2xl font-bold uppercase mb-3 leading-tight">
+                          {featured.title}
+                        </h3>
+                        <p className="text-sm text-[var(--muted)] leading-relaxed mb-4 line-clamp-3">
+                          {featured.description || "No description provided."}
+                        </p>
+                        <div className="flex items-center gap-4 text-xs text-[var(--muted)] mb-4">
+                          <span className="flex items-center gap-1">
+                            <CalendarIcon />
+                            {new Date(featured.dateTime).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </span>
+                          {featured.location && (
+                            <span className="flex items-center gap-1">
+                              <LocationIcon />
+                              {featured.location}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="border-t-2 border-[var(--border)] pt-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-sm font-bold">
+                          <ThumbsUpIcon />
+                          {featured.upvotes}
+                        </div>
+                        <a href={`/event/${featured.id}`} className="bg-[var(--accent)] border-2 border-[var(--border)] px-5 py-2 text-sm font-bold hover:bg-[var(--accent-hover)] transition-colors">
+                          VIEW_DETAILS
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Upcoming Events */}
+              {upcoming.length > 0 && (
+                <div>
+                  <h2 className="text-2xl font-bold uppercase tracking-tight mb-5">
+                    Upcoming_Events
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                    {upcoming.map((event) => (
+                      <div
+                        key={event.id}
+                        className="border-2 border-[var(--border)] flex flex-col overflow-hidden hover:shadow-[4px_4px_0px_var(--border)] transition-shadow"
+                      >
+                        <div className="relative bg-gray-200 h-44 overflow-hidden">
+                          <div className="absolute top-3 right-3 z-10">
+                            <span className="px-2 py-0.5 text-xs font-bold border-2 border-[var(--border)] bg-[var(--accent)]">
+                              {event.eventType.toUpperCase()}
+                            </span>
+                          </div>
+                          {event.bannerUrl ? (
+                            <img src={event.bannerUrl} alt={event.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400" />
+                          )}
+                        </div>
+                        <div className="p-4 flex flex-col flex-1">
+                          <h3 className="text-base font-bold uppercase mb-1.5">
+                            {event.title}
+                          </h3>
+                          <p className="text-xs text-[var(--muted)] leading-relaxed mb-3 flex-1 line-clamp-2">
+                            {event.description || "No description provided."}
+                          </p>
+                          <div className="flex items-center gap-3 text-xs text-[var(--muted)] mb-3">
+                            <span className="flex items-center gap-1">
+                              <CalendarIcon />
+                              {new Date(event.dateTime).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            </span>
+                            {event.location && (
+                              <span className="flex items-center gap-1">
+                                <LocationIcon />
+                                {event.location}
+                              </span>
+                            )}
+                          </div>
+                          <div className="border-t-2 border-[var(--border)] pt-3 flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-sm font-bold">
+                              <ThumbsUpIcon />
+                              {event.upvotes}
+                            </div>
+                            <a href={`/event/${event.id}`} className="border-2 border-[var(--border)] px-3 py-1.5 text-xs font-bold hover:bg-gray-100 transition-colors">
+                              VIEW_DETAILS
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </main>
       </div>
 
