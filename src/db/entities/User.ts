@@ -1,21 +1,21 @@
-import { Entity, OptionalProps, PrimaryKey, Property } from "@mikro-orm/core";
+import { EntitySchema } from "@mikro-orm/core";
 
-@Entity({ tableName: "user" })
-export class User {
-  [OptionalProps]?: "createdAt";
-
-  @PrimaryKey({ type: "int" })
-  id!: number;
-
-  @Property({ type: "string" })
-  name!: string;
-
-  @Property({ type: "string", unique: true })
-  email!: string;
-
-  @Property({ type: "string" })
-  password!: string;
-
-  @Property({ type: "Date" })
-  createdAt: Date = new Date();
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  password: string;
+  createdAt?: Date;
 }
+
+export const UserSchema = new EntitySchema<User>({
+  name: "User",
+  tableName: "user",
+  properties: {
+    id: { type: "int", primary: true },
+    name: { type: "string" },
+    email: { type: "string", unique: true },
+    password: { type: "string" },
+    createdAt: { type: "Date", onCreate: () => new Date() },
+  },
+});

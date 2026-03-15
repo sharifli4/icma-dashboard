@@ -1,34 +1,30 @@
-import { Entity, ManyToOne, OptionalProps, PrimaryKey, Property } from "@mikro-orm/core";
-import { HackathonSubmissionSession } from "./HackathonSubmissionSession";
+import { EntitySchema } from "@mikro-orm/core";
+import type { HackathonSubmissionSession } from "./HackathonSubmissionSession";
 
-@Entity({ tableName: "hackathon_project_submission" })
-export class HackathonProjectSubmission {
-  [OptionalProps]?: "createdAt";
-
-  @PrimaryKey({ type: "int" })
-  id!: number;
-
-  @ManyToOne(() => HackathonSubmissionSession)
-  session!: HackathonSubmissionSession;
-
-  @Property({ type: "string" })
-  projectName!: string;
-
-  @Property({ type: "string" })
-  team!: string;
-
-  @Property({ type: "string" })
-  demoUrl!: string;
-
-  @Property({ type: "string" })
-  demoVideoObjectKey!: string;
-
-  @Property({ type: "string" })
-  demoVideoPublicUrl!: string;
-
-  @Property({ type: "string" })
-  githubUrl!: string;
-
-  @Property({ type: "Date", onCreate: () => new Date() })
-  createdAt!: Date;
+export interface HackathonProjectSubmission {
+  id: number;
+  session: HackathonSubmissionSession;
+  projectName: string;
+  team: string;
+  demoUrl: string;
+  demoVideoObjectKey: string;
+  demoVideoPublicUrl: string;
+  githubUrl: string;
+  createdAt?: Date;
 }
+
+export const HackathonProjectSubmissionSchema = new EntitySchema<HackathonProjectSubmission>({
+  name: "HackathonProjectSubmission",
+  tableName: "hackathon_project_submission",
+  properties: {
+    id: { type: "int", primary: true },
+    session: { kind: "m:1", entity: "HackathonSubmissionSession" },
+    projectName: { type: "string" },
+    team: { type: "string" },
+    demoUrl: { type: "string" },
+    demoVideoObjectKey: { type: "string" },
+    demoVideoPublicUrl: { type: "string" },
+    githubUrl: { type: "string" },
+    createdAt: { type: "Date", onCreate: () => new Date() },
+  },
+});

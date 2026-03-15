@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { getORM } from "@/db";
-import { User } from "@/db/entities/User";
+import type { User } from "@/db/entities/User";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   const orm = await getORM();
   const em = orm.em.fork();
 
-  const existing = await em.findOne(User, { email });
+  const existing = await em.findOne<User>("User", { email });
   if (existing) {
     return NextResponse.json(
       { error: "Email already registered" },
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
   const hashedPassword = await bcrypt.hash(password, 12);
 
-  const user = em.create(User, {
+  const user = em.create<User>("User", {
     name,
     email,
     password: hashedPassword,

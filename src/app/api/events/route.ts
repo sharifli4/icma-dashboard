@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getORM } from "@/db";
-import { CommunityEvent } from "@/db/entities/Event";
-import { User } from "@/db/entities/User";
+import type { CommunityEvent } from "@/db/entities/Event";
+import type { User } from "@/db/entities/User";
 
 export const runtime = "nodejs";
 
@@ -21,7 +21,7 @@ function formatEvent(event: CommunityEvent) {
     hackathonEnabled: event.hackathonEnabled,
     upvotes: event.upvotes,
     status: event.status,
-    createdAt: event.createdAt.toISOString(),
+    createdAt: event.createdAt?.toISOString() ?? new Date().toISOString(),
   };
 }
 
@@ -36,11 +36,11 @@ export async function GET(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const events = await em.find(CommunityEvent, { user: { id: Number(session.user.id) } }, { orderBy: { createdAt: "DESC" } });
+    const events = await em.find<CommunityEvent>("CommunityEvent", { user: { id: Number(session.user.id) } }, { orderBy: { createdAt: "DESC" } });
     return NextResponse.json({ data: events.map(formatEvent) });
   }
 
-  const events = await em.find(CommunityEvent, { status: "LIVE" }, { orderBy: { createdAt: "DESC" } });
+  const events = await em.find<CommunityEvent>("CommunityEvent", { status: "LIVE" }, { orderBy: { createdAt: "DESC" } });
   return NextResponse.json({ data: events.map(formatEvent) });
 }
 
@@ -60,9 +60,9 @@ export async function POST(request: NextRequest) {
 
   const orm = await getORM();
   const em = orm.em.fork();
-  const user = await em.findOneOrFail(User, { id: Number(session.user.id) });
+  const user = await em.findOneOrFail<User>("User", { id: Number(session.user.id) });
 
-  const event = em.create(CommunityEvent, {
+  const event = em.create<CommunityEvent>("CommunityEvent", {
     user,
     title,
     description: description || "",
