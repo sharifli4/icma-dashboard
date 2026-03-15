@@ -5,6 +5,7 @@ import { HackathonSubmissionSession } from "./entities/HackathonSubmissionSessio
 import { HackathonProjectSubmission } from "./entities/HackathonProjectSubmission";
 import { CommunityProfile } from "./entities/CommunityProfile";
 import { CommunityEvent } from "./entities/Event";
+import { migrations } from "./migrations";
 
 export default defineConfig({
   entities: [User, HackathonSubmissionSession, HackathonProjectSubmission, CommunityProfile, CommunityEvent],
@@ -16,9 +17,7 @@ export default defineConfig({
   },
   extensions: [Migrator],
   migrations: {
-    path: "./src/db/migrations",
-    pathTs: "./src/db/migrations",
-    glob: "!(*.d).{js,ts}",
+    migrationsList: migrations,
     tableName: "mikro_orm_migrations",
     transactional: true,
     allOrNothing: true,
