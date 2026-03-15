@@ -1,31 +1,31 @@
 import { Entity, ManyToOne, OptionalProps, PrimaryKey, Property } from "@mikro-orm/core";
 import { User } from "./User";
 
-@Entity()
+@Entity({ tableName: "community_profile" })
 export class CommunityProfile {
   [OptionalProps]?: "createdAt" | "description" | "logoUrl" | "websiteUrl" | "socialUrl";
 
-  @PrimaryKey()
+  @PrimaryKey({ type: "int" })
   id!: number;
 
   @ManyToOne(() => User, { unique: true })
   user!: User;
 
-  @Property()
+  @Property({ type: "string" })
   communityName!: string;
 
   @Property({ type: "text", default: "" })
   description: string = "";
 
-  @Property({ nullable: true })
+  @Property({ type: "string", nullable: true })
   logoUrl?: string;
 
-  @Property({ nullable: true })
+  @Property({ type: "string", nullable: true })
   websiteUrl?: string;
 
-  @Property({ nullable: true })
+  @Property({ type: "string", nullable: true })
   socialUrl?: string;
 
-  @Property()
+  @Property({ type: "Date" })
   createdAt: Date = new Date();
 }

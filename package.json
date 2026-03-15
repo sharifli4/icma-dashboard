@@ -3,15 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "lint:cycles": "madge --circular --extensions ts,tsx --ts-config ./tsconfig.json ./src",
     "db:create": "mikro-orm schema:create --run",
     "db:update": "mikro-orm schema:update --run",
     "db:drop": "mikro-orm schema:drop --run",
-    "db:seed": "npx tsx scripts/seed.ts"
+    "db:seed": "npx tsx scripts/seed.ts",
+    "db:migrate": "mikro-orm migration:up",
+    "db:migrate:down": "mikro-orm migration:down",
+    "db:migrate:create": "mikro-orm migration:create",
+    "db:migrate:pending": "mikro-orm migration:pending",
+    "db:migrate:fresh": "mikro-orm migration:fresh"
   },
   "mikro-orm": {
     "useTsNode": true,
@@ -23,6 +28,7 @@
     "@aws-sdk/client-s3": "^3.1009.0",
     "@mikro-orm/cli": "^6.6.9",
     "@mikro-orm/core": "^6.6.9",
+    "@mikro-orm/migrations": "^6.6.9",
     "@mikro-orm/postgresql": "^6.6.9",
     "bcryptjs": "^3.0.3",
     "next": "16.1.6",
