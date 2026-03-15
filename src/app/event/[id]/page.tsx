@@ -336,10 +336,10 @@ export default function EventDetailPage() {
                           View QR Code & Link
                         </button>
                         <a
-                          href="/hackathon/dashboard"
+                          href={`/event/${event.id}/submissions`}
                           className="border-2 border-[var(--border)] bg-white px-4 py-2 text-xs font-bold uppercase hover:bg-gray-100 transition-colors"
                         >
-                          View Submissions
+                          View Submissions ({hackathonSession.submissionCount})
                         </a>
                       </div>
                     </div>
