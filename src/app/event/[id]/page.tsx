@@ -322,8 +322,7 @@ export default function EventDetailPage() {
                     )}
                   </p>
                 </div>
-{!isOrganizer && (
-                  hackathonSession && new Date() >= new Date(hackathonSession.startDate) && new Date() <= new Date(hackathonSession.endDate) ? (
+{hackathonSession ? (
                     <a href={hackathonSession.submitPath} className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase hover:bg-gray-100 transition-colors flex-shrink-0">
                       Submit Project
                     </a>
@@ -331,14 +330,13 @@ export default function EventDetailPage() {
                     <span className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase text-[var(--muted)] cursor-not-allowed">
                       Submit Project
                     </span>
-                  )
-                )}
+                  )}
               </div>
 
-              {isOrganizer && hackathonSession && (
+              {hackathonSession && (
                 <div className="mt-6 pt-6 border-t-2 border-[var(--border)]">
                   <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Organizer Controls</h4>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Hackathon Info</h4>
                     <div className="flex items-center gap-2">
                       <span className="text-2xl font-black">{hackathonSession.submissionCount}</span>
                       <span className="text-xs font-bold uppercase text-[var(--muted)]">
@@ -347,27 +345,12 @@ export default function EventDetailPage() {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-3">
-                    {new Date() <= new Date(hackathonSession.endDate) && (
-                      <button onClick={() => setShowQrModal(true)} className="border-2 border-[var(--border)] bg-white px-4 py-2 text-xs font-bold uppercase hover:bg-gray-100 transition-colors flex items-center gap-2">
-                        <QrCodeIcon />
-                        View QR Code & Link
-                      </button>
-                    )}
+                    <button onClick={() => setShowQrModal(true)} className="border-2 border-[var(--border)] bg-white px-4 py-2 text-xs font-bold uppercase hover:bg-gray-100 transition-colors flex items-center gap-2">
+                      <QrCodeIcon />
+                      View QR Code & Link
+                    </button>
                     <a href={`/event/${event.id}/submissions`} className="border-2 border-[var(--border)] bg-white px-4 py-2 text-xs font-bold uppercase hover:bg-gray-100 transition-colors">
                       View Submissions ({hackathonSession.submissionCount})
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {!isOrganizer && hackathonSession && new Date() > new Date(hackathonSession.endDate) && hackathonSession.submissionCount > 0 && (
-                <div className="mt-6 pt-6 border-t-2 border-[var(--border)]">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase text-[var(--muted)]">
-                      {hackathonSession.submissionCount} {hackathonSession.submissionCount === 1 ? "Project" : "Projects"} Submitted
-                    </span>
-                    <a href={`/event/${event.id}/submissions`} className="border-2 border-[var(--border)] bg-white px-4 py-2 text-xs font-bold uppercase hover:bg-gray-100 transition-colors">
-                      View Submissions
                     </a>
                   </div>
                 </div>
