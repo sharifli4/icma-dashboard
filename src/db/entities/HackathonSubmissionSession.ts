@@ -9,7 +9,7 @@ export class HackathonSubmissionSession {
   id!: number;
 
   @Property()
-  eventId!: string;
+  eventName!: string;
 
   @Property({ unique: true, length: 64 })
   token!: string;

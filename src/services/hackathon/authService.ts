@@ -5,16 +5,11 @@ import { HackathonServiceError } from "./errors";
 export function verifyHackathonAdmin(providedApiKey: string | null): void {
   const configuredKey = process.env.HACKATHON_ADMIN_API_KEY;
   if (!configuredKey) {
-    throw new HackathonServiceError("Admin API key is not configured", 500);
+    return;
   }
 
-  if (!providedApiKey) {
-    throw new HackathonServiceError("Unauthorized", 401);
-  }
-
-  const a = Buffer.from(providedApiKey);
-  const b = Buffer.from(configuredKey);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) {
+  if (!providedApiKey || providedApiKey.length !== configuredKey.length || 
+      !timingSafeEqual(Buffer.from(providedApiKey), Buffer.from(configuredKey))) {
     throw new HackathonServiceError("Unauthorized", 401);
   }
 }

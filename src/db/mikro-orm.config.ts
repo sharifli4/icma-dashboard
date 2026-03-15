@@ -6,4 +6,9 @@ import { HackathonProjectSubmission } from "./entities/HackathonProjectSubmissio
 export default defineConfig({
   entities: [User, HackathonSubmissionSession, HackathonProjectSubmission],
   clientUrl: process.env.DATABASE_URL,
+  driverOptions: {
+    connection: {
+      ssl: { rejectUnauthorized: false },
+    },
+  },
 });
