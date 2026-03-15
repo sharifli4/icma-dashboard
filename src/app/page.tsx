@@ -360,7 +360,68 @@ export default function Home() {
         {/* Main Content */}
         <main className="flex-1 p-6 lg:p-8">
           {!loaded ? (
-            <div className="py-16 text-center text-sm font-bold text-[var(--muted)]">Loading events...</div>
+            <>
+              {/* Featured skeleton */}
+              <div className="mb-10">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-52 h-7 bg-gray-200 animate-pulse rounded" />
+                  <div className="flex gap-2">
+                    <div className="w-8 h-8 bg-gray-200 animate-pulse rounded" />
+                    <div className="w-8 h-8 bg-gray-200 animate-pulse rounded" />
+                  </div>
+                </div>
+                <div className="border-2 border-gray-200 flex flex-col md:flex-row overflow-hidden">
+                  <div className="md:w-1/2 bg-gray-200 animate-pulse min-h-[280px]" />
+                  <div className="md:w-1/2 p-6 flex flex-col justify-between">
+                    <div>
+                      <div className="flex gap-2 mb-3">
+                        <div className="w-16 h-5 bg-gray-200 animate-pulse rounded" />
+                        <div className="w-28 h-5 bg-gray-200 animate-pulse rounded" />
+                      </div>
+                      <div className="w-3/4 h-8 bg-gray-200 animate-pulse rounded mb-3" />
+                      <div className="space-y-2 mb-4">
+                        <div className="w-full h-4 bg-gray-100 animate-pulse rounded" />
+                        <div className="w-full h-4 bg-gray-100 animate-pulse rounded" />
+                        <div className="w-2/3 h-4 bg-gray-100 animate-pulse rounded" />
+                      </div>
+                      <div className="flex gap-4">
+                        <div className="w-28 h-3 bg-gray-100 animate-pulse rounded" />
+                        <div className="w-24 h-3 bg-gray-100 animate-pulse rounded" />
+                      </div>
+                    </div>
+                    <div className="border-t-2 border-gray-200 pt-4 flex items-center justify-between mt-4">
+                      <div className="w-16 h-8 bg-gray-200 animate-pulse rounded" />
+                      <div className="w-28 h-9 bg-gray-200 animate-pulse rounded" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Upcoming grid skeleton */}
+              <div>
+                <div className="w-48 h-7 bg-gray-200 animate-pulse rounded mb-5" />
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="border-2 border-gray-200 flex flex-col overflow-hidden">
+                      <div className="bg-gray-200 animate-pulse h-44" />
+                      <div className="p-4 flex flex-col flex-1">
+                        <div className="w-3/4 h-5 bg-gray-200 animate-pulse rounded mb-2" />
+                        <div className="w-full h-3 bg-gray-100 animate-pulse rounded mb-1" />
+                        <div className="w-2/3 h-3 bg-gray-100 animate-pulse rounded mb-3" />
+                        <div className="flex gap-3 mb-3">
+                          <div className="w-24 h-3 bg-gray-100 animate-pulse rounded" />
+                          <div className="w-20 h-3 bg-gray-100 animate-pulse rounded" />
+                        </div>
+                        <div className="border-t-2 border-gray-200 pt-3 flex items-center justify-between">
+                          <div className="w-12 h-6 bg-gray-200 animate-pulse rounded" />
+                          <div className="w-24 h-7 bg-gray-200 animate-pulse rounded" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
           ) : filteredEvents.length === 0 ? (
             <div className="py-16 text-center">
               <h2 className="text-2xl font-bold uppercase tracking-tight mb-3">
