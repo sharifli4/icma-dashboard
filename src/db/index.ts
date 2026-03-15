@@ -9,3 +9,4 @@ export async function getORM(): Promise<MikroORM> {
   }
   return orm;
 }
+
