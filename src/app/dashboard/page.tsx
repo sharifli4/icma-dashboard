@@ -209,8 +209,50 @@ export default function DashboardPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center font-bold text-sm">
-        Loading...
+      <div className="min-h-screen flex flex-col">
+        <header className="border-b-2 border-[var(--border)] px-6 py-3 flex items-center justify-between bg-white">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
+            <div className="w-20 h-5 bg-gray-200 animate-pulse rounded" />
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="w-24 h-5 bg-gray-200 animate-pulse rounded" />
+            <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse" />
+            <div className="w-20 h-9 bg-gray-200 animate-pulse rounded" />
+          </div>
+        </header>
+        <main className="flex-1 bg-[#f5f5f5]">
+          <div className="max-w-6xl mx-auto px-6 py-8">
+            <div className="mb-8">
+              <div className="w-72 h-10 bg-gray-200 animate-pulse rounded mb-2" />
+              <div className="w-96 h-4 bg-gray-200 animate-pulse rounded" />
+            </div>
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="lg:w-[380px] border-2 border-gray-200 bg-white p-6">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="mb-4">
+                    <div className="w-28 h-3 bg-gray-200 animate-pulse rounded mb-2" />
+                    <div className="w-full h-10 bg-gray-100 animate-pulse rounded" />
+                  </div>
+                ))}
+              </div>
+              <div className="flex-1 border-2 border-gray-200 bg-white p-6">
+                <div className="flex justify-between mb-6">
+                  <div className="w-48 h-6 bg-gray-200 animate-pulse rounded" />
+                  <div className="w-40 h-8 bg-gray-200 animate-pulse rounded" />
+                </div>
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-4 py-4 border-b border-gray-100">
+                    <div className="w-14 h-5 bg-gray-200 animate-pulse rounded" />
+                    <div className="flex-1 h-4 bg-gray-200 animate-pulse rounded" />
+                    <div className="w-24 h-4 bg-gray-100 animate-pulse rounded" />
+                    <div className="w-8 h-4 bg-gray-200 animate-pulse rounded" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -268,7 +310,20 @@ export default function DashboardPage() {
               </h2>
 
               {!profileLoaded ? (
-                <div className="py-8 text-center text-sm text-[var(--muted)]">Loading profile...</div>
+                <div className="space-y-4">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i}>
+                      <div className="w-28 h-3 bg-gray-200 animate-pulse rounded mb-2" />
+                      <div className="w-full h-10 bg-gray-100 animate-pulse rounded" />
+                    </div>
+                  ))}
+                  <div className="w-full h-28 bg-gray-100 animate-pulse rounded border-2 border-dashed border-gray-200" />
+                  <div className="flex gap-3">
+                    <div className="flex-1 h-10 bg-gray-100 animate-pulse rounded" />
+                    <div className="flex-1 h-10 bg-gray-100 animate-pulse rounded" />
+                  </div>
+                  <div className="w-full h-12 bg-gray-200 animate-pulse rounded" />
+                </div>
               ) : (
                 <>
                   <div className="mb-4">
@@ -398,7 +453,17 @@ export default function DashboardPage() {
 
               {/* Table Rows */}
               {!eventsLoaded ? (
-                <div className="py-8 text-center text-sm text-[var(--muted)]">Loading events...</div>
+                <>
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="grid grid-cols-[80px_1fr_120px_60px_30px] items-center py-4 border-b border-gray-100">
+                      <div className="w-12 h-5 bg-gray-200 animate-pulse rounded" />
+                      <div className="h-4 bg-gray-200 animate-pulse rounded w-3/4" />
+                      <div className="h-3 bg-gray-100 animate-pulse rounded w-20" />
+                      <div className="h-4 bg-gray-200 animate-pulse rounded w-8" />
+                      <div className="h-4 w-4 bg-gray-100 animate-pulse rounded" />
+                    </div>
+                  ))}
+                </>
               ) : paginatedEvents.length === 0 ? (
                 <div className="py-8 text-center text-sm text-[var(--muted)]">No events yet. Create your first event!</div>
               ) : (
