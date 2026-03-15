@@ -1,18 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getORM } from "@/db";
 import type { EventVote } from "@/db/entities/EventVote";
+import { getClientIp } from "@/lib/ip";
 
 export const runtime = "nodejs";
-
-function getClientIp(request: NextRequest): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) {
-    return forwarded.split(",")[0].trim();
-  }
-  const real = request.headers.get("x-real-ip");
-  if (real) return real.trim();
-  return "127.0.0.1";
-}
 
 // GET which event IDs the current IP has voted for
 // Usage: GET /api/events/voted?ids=1,2,3

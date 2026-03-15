@@ -146,8 +146,9 @@ export default function EventDetailPage() {
         if (json?.data) {
           setEvent(json.data);
           fetch(`/api/events/${json.data.id}/vote`)
-            .then((r) => r.json())
-            .then((v) => setHasVoted(v.hasVoted));
+            .then((r) => r.ok ? r.json() : null)
+            .then((v) => { if (v) setHasVoted(v.hasVoted); })
+            .catch(() => {});
         }
         setLoading(false);
       });
@@ -183,9 +184,12 @@ export default function EventDetailPage() {
     setVoting(true);
     try {
       const res = await fetch(`/api/events/${event.id}/vote`, { method: "POST" });
+      if (!res.ok) return;
       const data = await res.json();
       setEvent((prev) => prev ? { ...prev, upvotes: data.upvotes } : prev);
       setHasVoted(data.hasVoted);
+    } catch {
+      // Network error — silently ignore
     } finally {
       setVoting(false);
     }
