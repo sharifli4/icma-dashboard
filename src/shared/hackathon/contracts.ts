@@ -1,12 +1,12 @@
 export interface CreateHackathonSessionInput {
-  eventId: string;
+  eventName: string;
   startDate: string;
   endDate: string;
 }
 
 export interface HackathonSessionData {
   id: number;
-  eventId: string;
+  eventName: string;
   token: string;
   submitPath: string;
   startDate: string;
@@ -35,4 +35,11 @@ export interface HackathonSubmissionData {
   demoVideoUrl: string;
   githubUrl: string;
   createdAt: string;
+}
+
+export interface HackathonSessionStatus {
+  eventName: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
 }
