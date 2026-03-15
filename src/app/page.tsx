@@ -88,6 +88,7 @@ export default function Home() {
   const [customDateFrom, setCustomDateFrom] = useState("");
   const [customDateTo, setCustomDateTo] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/events")
@@ -325,9 +326,16 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Mobile search toggle */}
+          <button
+            onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+            className="sm:hidden w-9 h-9 border-2 border-[var(--border)] flex items-center justify-center hover:bg-gray-100 transition-colors"
+          >
+            <SearchIcon />
+          </button>
           {session ? (
             <>
-              <a href="/dashboard" className="text-sm font-bold hover:underline">
+              <a href="/dashboard" className="text-sm font-bold hover:underline hidden sm:inline">
                 {session.user.name}
               </a>
               <button
@@ -349,6 +357,78 @@ export default function Home() {
           )}
         </div>
       </header>
+
+      {/* Mobile Search Bar */}
+      {mobileSearchOpen && (
+        <div className="sm:hidden border-b-2 border-[var(--border)] px-4 py-3 bg-white sticky top-[57px] z-40">
+          <div className="flex items-center border-2 border-[var(--border)] rounded px-3 py-1.5 gap-2 relative">
+            <SearchIcon />
+            <input
+              type="text"
+              placeholder="Search_Events..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+              autoFocus
+              className="bg-transparent outline-none text-sm font-mono w-full"
+            />
+            {searchQuery.trim() && (
+              <button onClick={() => setSearchQuery("")} className="text-[var(--muted)] hover:text-[var(--foreground)] flex-shrink-0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              </button>
+            )}
+
+            {/* Mobile Search Dropdown */}
+            {searchFocused && searchQuery.trim() && (
+              <div className="absolute top-full left-0 right-0 mt-1 border-2 border-[var(--border)] bg-white shadow-[4px_4px_0px_var(--border)] max-h-72 overflow-y-auto z-[60]">
+                {filteredEvents.length === 0 ? (
+                  <div className="px-4 py-6 text-center text-xs font-bold text-[var(--muted)] uppercase">
+                    No results for &ldquo;{searchQuery}&rdquo;
+                  </div>
+                ) : (
+                  <>
+                    <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)] border-b border-gray-200">
+                      {filteredEvents.length} {filteredEvents.length === 1 ? "result" : "results"}
+                    </div>
+                    {filteredEvents.slice(0, 6).map((e) => (
+                      <a
+                        key={e.id}
+                        href={`/event/${e.id}`}
+                        className="flex items-start gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="w-10 h-10 bg-gray-200 rounded flex-shrink-0 overflow-hidden">
+                          {e.bannerUrl ? (
+                            <img src={e.bannerUrl} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold truncate">{e.title}</div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] font-bold px-1.5 py-0 border border-[var(--border)] bg-gray-50">{e.eventType.toUpperCase()}</span>
+                            <span className="text-[10px] text-[var(--muted)]">{e.category}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-[var(--muted)] flex-shrink-0">
+                          <ThumbsUpIcon />
+                          {e.upvotes}
+                        </div>
+                      </a>
+                    ))}
+                    {filteredEvents.length > 6 && (
+                      <div className="px-3 py-2 text-[10px] font-bold text-center text-[var(--muted)] border-t border-gray-200">
+                        +{filteredEvents.length - 6} more results
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-1">
         {/* Sidebar */}
