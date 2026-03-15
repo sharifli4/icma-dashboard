@@ -1,6 +1,6 @@
 import { Entity, OptionalProps, PrimaryKey, Property } from "@mikro-orm/core";
 
-@Entity({ tableName: "user", entityName: "User" })
+@Entity({ tableName: "user" })
 export class User {
   [OptionalProps]?: "createdAt";
 
