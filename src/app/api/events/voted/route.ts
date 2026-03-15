@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getORM } from "@/db";
-import { EventVote } from "@/db/entities/EventVote";
+import type { EventVote } from "@/db/entities/EventVote";
 
 export const runtime = "nodejs";
 
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
   const orm = await getORM();
   const em = orm.em.fork();
 
-  const votes = await em.find(EventVote, {
+  const votes = await em.find<EventVote>("EventVote", {
     event: { id: { $in: ids } },
     ipAddress: ip,
   });

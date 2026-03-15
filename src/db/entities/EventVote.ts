@@ -1,20 +1,21 @@
-import { Entity, ManyToOne, OptionalProps, PrimaryKey, Property, Unique } from "@mikro-orm/core";
-import { CommunityEvent } from "./Event";
+import { EntitySchema } from "@mikro-orm/core";
+import type { CommunityEvent } from "./Event";
 
-@Entity({ tableName: "event_vote" })
-@Unique({ properties: ["event", "ipAddress"] })
-export class EventVote {
-  [OptionalProps]?: "createdAt";
-
-  @PrimaryKey()
-  id!: number;
-
-  @ManyToOne(() => CommunityEvent)
-  event!: CommunityEvent;
-
-  @Property()
-  ipAddress!: string;
-
-  @Property()
-  createdAt: Date = new Date();
+export interface EventVote {
+  id: number;
+  event: CommunityEvent;
+  ipAddress: string;
+  createdAt?: Date;
 }
+
+export const EventVoteSchema = new EntitySchema<EventVote>({
+  name: "EventVote",
+  tableName: "event_vote",
+  uniques: [{ properties: ["event", "ipAddress"] }],
+  properties: {
+    id: { type: "int", primary: true },
+    event: { kind: "m:1", entity: "CommunityEvent" },
+    ipAddress: { type: "string" },
+    createdAt: { type: "Date", onCreate: () => new Date() },
+  },
+});
