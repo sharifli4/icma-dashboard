@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     "@mikro-orm/migrations",
     "@mikro-orm/cli",
   ],
+  turbopack: {},
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.optimization = {
