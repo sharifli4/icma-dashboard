@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 
 function UploadIcon() {
   return (
@@ -35,26 +35,32 @@ const CATEGORIES = [
 ];
 
 export default function CreateEventPage() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [dateTime, setDateTime] = useState("");
+  const [eventType, setEventType] = useState("Event");
+  const [category, setCategory] = useState("AI / Machine Learning");
+  const [location, setLocation] = useState("");
+  const [registrationUrl, setRegistrationUrl] = useState("");
   const [enableSubmissions, setEnableSubmissions] = useState(true);
-  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerUrl, setBannerUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: session, status } = useSession();
-
   const uploadFile = async (file: File) => {
-    setBannerFile(file);
     setUploading(true);
     const form = new FormData();
     form.append("file", file);
     const res = await fetch("/api/upload", { method: "POST", body: form });
     const json = await res.json();
     setUploading(false);
-    if (res.ok) {
-      setBannerUrl(json.data.publicUrl);
-    }
+    if (res.ok) setBannerUrl(json.data.publicUrl);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -67,6 +73,40 @@ export default function CreateEventPage() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) uploadFile(file);
+  };
+
+  const handlePublish = async () => {
+    if (!title.trim() || !dateTime || !eventType || !category) {
+      setError("Please fill in all required fields");
+      return;
+    }
+    setError("");
+    setSubmitting(true);
+
+    const res = await fetch("/api/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: title.trim(),
+        description: description.trim(),
+        bannerUrl: bannerUrl || null,
+        dateTime,
+        eventType,
+        category,
+        location: location.trim() || null,
+        registrationUrl: registrationUrl.trim() || null,
+        hackathonEnabled: enableSubmissions,
+      }),
+    });
+
+    setSubmitting(false);
+
+    if (res.ok) {
+      router.push("/dashboard");
+    } else {
+      const json = await res.json();
+      setError(json.error || "Failed to create event");
+    }
   };
 
   if (status === "loading") {
@@ -108,7 +148,6 @@ export default function CreateEventPage() {
         </div>
       </header>
 
-      {/* Accent line */}
       <div className="h-1 bg-[var(--accent)]" />
 
       {/* Main */}
@@ -122,6 +161,12 @@ export default function CreateEventPage() {
             Deploy a new technical activation to the ICMA community.
           </p>
 
+          {error && (
+            <div className="border-2 border-red-500 bg-red-50 px-4 py-3 text-sm text-red-700 font-bold mb-6">
+              {error}
+            </div>
+          )}
+
           {/* Event Title */}
           <div className="mb-6">
             <label className="block text-xs font-bold uppercase tracking-wider mb-2">
@@ -129,6 +174,8 @@ export default function CreateEventPage() {
             </label>
             <input
               type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. NeurIPS 2024 After-Party"
               className="w-full border-2 border-[var(--border)] px-4 py-3 text-sm bg-white outline-none focus:border-[var(--accent)] transition-colors font-mono"
             />
@@ -145,19 +192,13 @@ export default function CreateEventPage() {
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed h-52 flex flex-col items-center justify-center cursor-pointer transition-colors ${
-                dragActive
-                  ? "border-[var(--accent)] bg-amber-50"
-                  : "border-gray-400 bg-white"
+                dragActive ? "border-[var(--accent)] bg-amber-50" : "border-gray-400 bg-white"
               }`}
             >
               {bannerUrl ? (
                 <img src={bannerUrl} alt="Banner preview" className="max-h-48 object-contain" />
               ) : uploading ? (
                 <span className="text-sm font-bold">Uploading...</span>
-              ) : bannerFile ? (
-                <span className="text-sm font-bold text-center px-4 break-all">
-                  {bannerFile.name}
-                </span>
               ) : (
                 <>
                   <UploadIcon />
@@ -174,13 +215,7 @@ export default function CreateEventPage() {
                 </>
               )}
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".png,.jpg,.jpeg,.webp"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
+            <input ref={fileInputRef} type="file" accept=".png,.jpg,.jpeg,.webp" onChange={handleFileSelect} className="hidden" />
           </div>
 
           <hr className="border-t-2 border-dashed border-gray-300 mb-6" />
@@ -188,30 +223,25 @@ export default function CreateEventPage() {
           {/* Date & Event Type */}
           <div className="flex gap-4 mb-6">
             <div className="flex-1">
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2">
-                Date and Time
-              </label>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2">Date and Time</label>
               <input
                 type="datetime-local"
+                value={dateTime}
+                onChange={(e) => setDateTime(e.target.value)}
                 className="w-full border-2 border-[var(--border)] px-4 py-3 text-sm bg-white outline-none focus:border-[var(--accent)] transition-colors font-mono"
               />
             </div>
             <div className="flex-1">
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2">
-                Event Type
-              </label>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2">Event Type</label>
               <div className="relative">
-                <select className="w-full border-2 border-[var(--border)] px-4 py-3 text-sm bg-white outline-none focus:border-[var(--accent)] transition-colors font-mono appearance-none pr-10">
-                  {EVENT_TYPES.map((type) => (
-                    <option key={type}>{type}</option>
-                  ))}
-                </select>
-                <svg
-                  className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                  width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                <select
+                  value={eventType}
+                  onChange={(e) => setEventType(e.target.value)}
+                  className="w-full border-2 border-[var(--border)] px-4 py-3 text-sm bg-white outline-none focus:border-[var(--accent)] transition-colors font-mono appearance-none pr-10"
                 >
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
+                  {EVENT_TYPES.map((type) => <option key={type}>{type}</option>)}
+                </select>
+                <svg className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6" /></svg>
               </div>
             </div>
           </div>
@@ -219,48 +249,55 @@ export default function CreateEventPage() {
           {/* Category & Registration Link */}
           <div className="flex gap-4 mb-6">
             <div className="flex-1">
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2">
-                Event Category
-              </label>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2">Event Category</label>
               <div className="relative">
-                <select className="w-full border-2 border-[var(--border)] px-4 py-3 text-sm bg-white outline-none focus:border-[var(--accent)] transition-colors font-mono appearance-none pr-10">
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat}>{cat}</option>
-                  ))}
-                </select>
-                <svg
-                  className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                  width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full border-2 border-[var(--border)] px-4 py-3 text-sm bg-white outline-none focus:border-[var(--accent)] transition-colors font-mono appearance-none pr-10"
                 >
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
+                  {CATEGORIES.map((cat) => <option key={cat}>{cat}</option>)}
+                </select>
+                <svg className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6" /></svg>
               </div>
             </div>
             <div className="flex-1">
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2">
-                External Registration Link
-              </label>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2">External Registration Link</label>
               <input
                 type="url"
+                value={registrationUrl}
+                onChange={(e) => setRegistrationUrl(e.target.value)}
                 placeholder="Luma, Google Forms, Typeform link"
                 className="w-full border-2 border-[var(--border)] px-4 py-3 text-sm bg-white outline-none focus:border-[var(--accent)] transition-colors font-mono"
               />
             </div>
           </div>
 
+          {/* Location */}
+          <div className="mb-6">
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2">Location</label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="e.g. San Francisco, CA or Virtual"
+              className="w-full border-2 border-[var(--border)] px-4 py-3 text-sm bg-white outline-none focus:border-[var(--accent)] transition-colors font-mono"
+            />
+          </div>
+
           {/* Description */}
           <div className="mb-6">
-            <label className="block text-xs font-bold uppercase tracking-wider mb-2">
-              Event Description
-            </label>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-2">Event Description</label>
             <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               placeholder="Outline the agenda, speakers, and technical requirements..."
               rows={6}
               className="w-full border-2 border-[var(--border)] px-4 py-3 text-sm bg-white outline-none focus:border-[var(--accent)] transition-colors font-mono resize-none"
             />
           </div>
 
-          {/* Hackathon Submissions Toggle */}
+          {/* Hackathon Toggle */}
           <div className="border-2 border-[var(--border)] bg-white px-5 py-4 mb-8 flex items-start gap-3">
             <input
               type="checkbox"
@@ -270,15 +307,17 @@ export default function CreateEventPage() {
             />
             <div>
               <span className="text-sm font-bold block">Enable Hackathon Submissions</span>
-              <span className="text-xs text-[var(--muted)]">
-                Allow participants to submit code repositories directly via ICMA.
-              </span>
+              <span className="text-xs text-[var(--muted)]">Allow participants to submit code repositories directly via ICMA.</span>
             </div>
           </div>
 
           {/* Submit */}
-          <button className="w-full bg-[var(--accent)] border-2 border-[var(--border)] py-4 text-base font-black uppercase tracking-wide hover:bg-[var(--accent-hover)] transition-colors">
-            Publish Event
+          <button
+            onClick={handlePublish}
+            disabled={submitting}
+            className="w-full bg-[var(--accent)] border-2 border-[var(--border)] py-4 text-base font-black uppercase tracking-wide hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50"
+          >
+            {submitting ? "Publishing..." : "Publish Event"}
           </button>
         </div>
       </main>
@@ -290,12 +329,8 @@ export default function CreateEventPage() {
           <span>&copy;2024 ICMA_Network // System_Status: Online</span>
         </div>
         <div className="flex items-center gap-4">
-          <a href="#" className="hover:text-[var(--foreground)] transition-colors">
-            Privacy_Policy
-          </a>
-          <a href="#" className="hover:text-[var(--foreground)] transition-colors">
-            Terms_of_Service
-          </a>
+          <a href="#" className="hover:text-[var(--foreground)] transition-colors">Privacy_Policy</a>
+          <a href="#" className="hover:text-[var(--foreground)] transition-colors">Terms_of_Service</a>
         </div>
       </footer>
     </div>

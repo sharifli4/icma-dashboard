@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { redirect } from "next/navigation";
 
-const EVENTS = [
-  { status: "LIVE", title: "Weekly Builder Hangout", date: "Oct 12, 2023", rsvps: 42 },
-  { status: "DRAFT", title: "Design Principles Q&A", date: "Oct 20, 2023", rsvps: 0 },
-  { status: "ENDED", title: "Community Kickoff", date: "Sep 30, 2023", rsvps: 128 },
-  { status: "LIVE", title: "Brutalism Workshop #2", date: "Nov 04, 2023", rsvps: 15 },
-];
+interface EventItem {
+  id: number;
+  title: string;
+  dateTime: string;
+  status: string;
+  upvotes: number;
+}
 
 function statusColor(status: string) {
   switch (status) {
@@ -89,11 +90,122 @@ function DotsIcon() {
   );
 }
 
+interface ProfileData {
+  communityName: string;
+  description: string;
+  logoUrl: string | null;
+  websiteUrl: string | null;
+  socialUrl: string | null;
+}
+
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 5;
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Events state
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [eventsLoaded, setEventsLoaded] = useState(false);
+  const eventsPerPage = 5;
+  const totalPages = Math.max(1, Math.ceil(events.length / eventsPerPage));
+  const paginatedEvents = events.slice((currentPage - 1) * eventsPerPage, currentPage * eventsPerPage);
+
+  // Profile state
+  const [communityName, setCommunityName] = useState("");
+  const [description, setDescription] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [socialUrl, setSocialUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  const loadEvents = useCallback(async () => {
+    const res = await fetch("/api/events?mine=true");
+    const json = await res.json();
+    if (json.data) setEvents(json.data);
+    setEventsLoaded(true);
+  }, []);
+
+  const handleDeleteEvent = async (id: number) => {
+    const res = await fetch(`/api/events/${id}`, { method: "DELETE" });
+    if (res.ok) setEvents((prev) => prev.filter((e) => e.id !== id));
+  };
+
+  const handleToggleStatus = async (id: number, current: string) => {
+    const newStatus = current === "LIVE" ? "DRAFT" : "LIVE";
+    const res = await fetch(`/api/events/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    if (res.ok) {
+      setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, status: newStatus } : e)));
+    }
+  };
+
+  const loadProfile = useCallback(async () => {
+    const res = await fetch("/api/community-profile");
+    const json = await res.json();
+    if (json.data) {
+      setCommunityName(json.data.communityName || "");
+      setDescription(json.data.description || "");
+      setLogoUrl(json.data.logoUrl || "");
+      setWebsiteUrl(json.data.websiteUrl || "");
+      setSocialUrl(json.data.socialUrl || "");
+    }
+    setProfileLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (session) {
+      loadProfile();
+      loadEvents();
+    }
+  }, [session, loadProfile, loadEvents]);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: form });
+    const json = await res.json();
+    setUploading(false);
+    if (res.ok) {
+      setLogoUrl(json.data.publicUrl);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!communityName.trim()) return;
+    setSaving(true);
+    setSaveMessage("");
+
+    const res = await fetch("/api/community-profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        communityName: communityName.trim(),
+        description: description.trim(),
+        logoUrl: logoUrl || null,
+        websiteUrl: websiteUrl.trim() || null,
+        socialUrl: socialUrl.trim() || null,
+      }),
+    });
+
+    setSaving(false);
+
+    if (res.ok) {
+      setSaveMessage("Saved!");
+      setTimeout(() => setSaveMessage(""), 2000);
+    } else {
+      const json = await res.json();
+      setSaveMessage(json.error || "Failed to save");
+    }
+  };
 
   if (status === "loading") {
     return (
@@ -155,74 +267,112 @@ export default function DashboardPage() {
                 Community Profile
               </h2>
 
-              <div className="mb-4">
-                <label className="block text-xs font-bold uppercase tracking-wider mb-2">
-                  Community Name
-                </label>
-                <input
-                  type="text"
-                  defaultValue="ICMA Innovators"
-                  className="w-full border-2 border-[var(--border)] px-4 py-3 text-sm bg-white outline-none focus:border-[var(--accent)] transition-colors font-mono"
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-xs font-bold uppercase tracking-wider mb-2">
-                  Short Description
-                </label>
-                <textarea
-                  placeholder="Describe your community..."
-                  rows={4}
-                  className="w-full border-2 border-[var(--border)] px-4 py-3 text-sm bg-white outline-none focus:border-[var(--accent)] transition-colors font-mono resize-none"
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-xs font-bold uppercase tracking-wider mb-2">
-                  Community Logo
-                </label>
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-gray-400 h-28 flex flex-col items-center justify-center cursor-pointer hover:border-[var(--accent)] transition-colors"
-                >
-                  <ImageIcon />
-                  <span className="text-xs font-bold mt-1 text-[var(--muted)]">UPLOAD FILE</span>
-                </div>
-                <input ref={fileInputRef} type="file" accept=".png,.svg,.jpg" className="hidden" />
-              </div>
-
-              <div className="flex gap-3 mb-5">
-                <div className="flex-1">
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-2">
-                    Website Link
-                  </label>
-                  <div className="flex items-center border-2 border-[var(--border)] px-3 py-3 gap-2">
-                    <LinkIcon />
-                    <input
-                      type="url"
-                      placeholder="https://your-website.com"
-                      className="bg-transparent outline-none text-xs font-mono w-full"
-                    />
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-2">
-                    Social Link
-                  </label>
-                  <div className="flex items-center border-2 border-[var(--border)] px-3 py-3 gap-2">
-                    <GlobeIcon />
+              {!profileLoaded ? (
+                <div className="py-8 text-center text-sm text-[var(--muted)]">Loading profile...</div>
+              ) : (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-xs font-bold uppercase tracking-wider mb-2">
+                      Community Name
+                    </label>
                     <input
                       type="text"
-                      placeholder="@username or URL"
-                      className="bg-transparent outline-none text-xs font-mono w-full"
+                      value={communityName}
+                      onChange={(e) => setCommunityName(e.target.value)}
+                      placeholder="e.g. ICMA Innovators"
+                      className="w-full border-2 border-[var(--border)] px-4 py-3 text-sm bg-white outline-none focus:border-[var(--accent)] transition-colors font-mono"
                     />
                   </div>
-                </div>
-              </div>
 
-              <button className="w-full bg-[var(--accent)] border-2 border-[var(--border)] py-3 text-sm font-black uppercase hover:bg-[var(--accent-hover)] transition-colors">
-                Save Changes
-              </button>
+                  <div className="mb-4">
+                    <label className="block text-xs font-bold uppercase tracking-wider mb-2">
+                      Short Description
+                    </label>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Describe your community..."
+                      rows={4}
+                      className="w-full border-2 border-[var(--border)] px-4 py-3 text-sm bg-white outline-none focus:border-[var(--accent)] transition-colors font-mono resize-none"
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-xs font-bold uppercase tracking-wider mb-2">
+                      Community Logo
+                    </label>
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-2 border-dashed border-gray-400 h-28 flex flex-col items-center justify-center cursor-pointer hover:border-[var(--accent)] transition-colors overflow-hidden"
+                    >
+                      {uploading ? (
+                        <span className="text-xs font-bold text-[var(--muted)]">Uploading...</span>
+                      ) : logoUrl ? (
+                        <img src={logoUrl} alt="Community logo" className="max-h-24 object-contain" />
+                      ) : (
+                        <>
+                          <ImageIcon />
+                          <span className="text-xs font-bold mt-1 text-[var(--muted)]">UPLOAD FILE</span>
+                        </>
+                      )}
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".png,.svg,.jpg,.jpeg,.webp"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 mb-5">
+                    <div className="flex-1">
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-2">
+                        Website Link
+                      </label>
+                      <div className="flex items-center border-2 border-[var(--border)] px-3 py-3 gap-2">
+                        <LinkIcon />
+                        <input
+                          type="url"
+                          value={websiteUrl}
+                          onChange={(e) => setWebsiteUrl(e.target.value)}
+                          placeholder="https://your-website.com"
+                          className="bg-transparent outline-none text-xs font-mono w-full"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-2">
+                        Social Link
+                      </label>
+                      <div className="flex items-center border-2 border-[var(--border)] px-3 py-3 gap-2">
+                        <GlobeIcon />
+                        <input
+                          type="text"
+                          value={socialUrl}
+                          onChange={(e) => setSocialUrl(e.target.value)}
+                          placeholder="@username or URL"
+                          className="bg-transparent outline-none text-xs font-mono w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleSave}
+                    disabled={saving || !communityName.trim()}
+                    className="w-full bg-[var(--accent)] border-2 border-[var(--border)] py-3 text-sm font-black uppercase hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50"
+                  >
+                    {saving ? "Saving..." : "Save Changes"}
+                  </button>
+
+                  {saveMessage && (
+                    <div className={`mt-3 text-xs font-bold text-center ${saveMessage === "Saved!" ? "text-green-600" : "text-red-600"}`}>
+                      {saveMessage}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             {/* Right - Event Management */}
@@ -247,24 +397,40 @@ export default function DashboardPage() {
               </div>
 
               {/* Table Rows */}
-              {EVENTS.map((event, i) => (
-                <div
-                  key={i}
-                  className="grid grid-cols-[80px_1fr_120px_60px_30px] items-center py-4 border-b border-gray-200 last:border-b-0"
-                >
-                  <span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 ${statusColor(event.status)}`}>
-                      {event.status}
+              {!eventsLoaded ? (
+                <div className="py-8 text-center text-sm text-[var(--muted)]">Loading events...</div>
+              ) : paginatedEvents.length === 0 ? (
+                <div className="py-8 text-center text-sm text-[var(--muted)]">No events yet. Create your first event!</div>
+              ) : (
+                paginatedEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    className="grid grid-cols-[80px_1fr_120px_60px_30px] items-center py-4 border-b border-gray-200 last:border-b-0"
+                  >
+                    <span>
+                      <button
+                        onClick={() => handleToggleStatus(event.id, event.status)}
+                        className={`text-[10px] font-bold px-2 py-0.5 cursor-pointer ${statusColor(event.status)}`}
+                        title="Click to toggle status"
+                      >
+                        {event.status}
+                      </button>
                     </span>
-                  </span>
-                  <span className="text-sm font-bold">{event.title}</span>
-                  <span className="text-xs text-[var(--muted)]">{event.date}</span>
-                  <span className="text-sm font-black">{event.rsvps}</span>
-                  <button className="flex items-center justify-center hover:bg-gray-100 rounded p-1 transition-colors">
-                    <DotsIcon />
-                  </button>
-                </div>
-              ))}
+                    <a href={`/event/${event.id}`} className="text-sm font-bold hover:underline">{event.title}</a>
+                    <span className="text-xs text-[var(--muted)]">
+                      {new Date(event.dateTime).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </span>
+                    <span className="text-sm font-black">{event.upvotes}</span>
+                    <button
+                      onClick={() => handleDeleteEvent(event.id)}
+                      className="flex items-center justify-center hover:bg-red-100 rounded p-1 transition-colors"
+                      title="Delete event"
+                    >
+                      <DotsIcon />
+                    </button>
+                  </div>
+                ))
+              )}
 
               {/* Pagination */}
               <div className="border-t-2 border-[var(--border)] mt-4 pt-4 flex items-center justify-between">
