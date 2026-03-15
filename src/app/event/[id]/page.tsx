@@ -347,10 +347,12 @@ export default function EventDetailPage() {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-3">
-                    <button onClick={() => setShowQrModal(true)} className="border-2 border-[var(--border)] bg-white px-4 py-2 text-xs font-bold uppercase hover:bg-gray-100 transition-colors flex items-center gap-2">
-                      <QrCodeIcon />
-                      View QR Code & Link
-                    </button>
+                    {new Date() <= new Date(hackathonSession.endDate) && (
+                      <button onClick={() => setShowQrModal(true)} className="border-2 border-[var(--border)] bg-white px-4 py-2 text-xs font-bold uppercase hover:bg-gray-100 transition-colors flex items-center gap-2">
+                        <QrCodeIcon />
+                        View QR Code & Link
+                      </button>
+                    )}
                     <a href={`/event/${event.id}/submissions`} className="border-2 border-[var(--border)] bg-white px-4 py-2 text-xs font-bold uppercase hover:bg-gray-100 transition-colors">
                       View Submissions ({hackathonSession.submissionCount})
                     </a>
