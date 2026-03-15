@@ -1,7 +1,7 @@
 import { Collection, Entity, OneToMany, OptionalProps, PrimaryKey, Property } from "@mikro-orm/core";
 import type { HackathonProjectSubmission } from "./HackathonProjectSubmission";
 
-@Entity({ tableName: "hackathon_submission_session" })
+@Entity({ tableName: "hackathon_submission_session", entityName: "HackathonSubmissionSession" })
 export class HackathonSubmissionSession {
   [OptionalProps]?: "createdAt";
 

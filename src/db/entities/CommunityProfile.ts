@@ -1,7 +1,7 @@
 import { Entity, ManyToOne, OptionalProps, PrimaryKey, Property } from "@mikro-orm/core";
 import { User } from "./User";
 
-@Entity({ tableName: "community_profile" })
+@Entity({ tableName: "community_profile", entityName: "CommunityProfile" })
 export class CommunityProfile {
   [OptionalProps]?: "createdAt" | "description" | "logoUrl" | "websiteUrl" | "socialUrl";
 
