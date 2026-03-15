@@ -87,6 +87,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [customDateFrom, setCustomDateFrom] = useState("");
   const [customDateTo, setCustomDateTo] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
 
   useEffect(() => {
     fetch("/api/events")
@@ -148,6 +149,8 @@ export default function Home() {
         if (
           !event.title.toLowerCase().includes(q) &&
           !event.description.toLowerCase().includes(q) &&
+          !event.category.toLowerCase().includes(q) &&
+          !event.eventType.toLowerCase().includes(q) &&
           !(event.location || "").toLowerCase().includes(q)
         ) {
           return false;
@@ -210,12 +213,10 @@ export default function Home() {
     const now = Date.now();
     const DAY_MS = 86400000;
 
-    // Only future/ongoing events can be trending
     const trendCandidates = filteredEvents.filter(
       (event) => new Date(event.dateTime).getTime() >= now
     );
 
-    // Score: higher upvotes + closer to today = higher score
     const scored = trendCandidates.map((event) => {
       const daysAway = (new Date(event.dateTime).getTime() - now) / DAY_MS;
       const proximityScore = Math.max(0, 1 - daysAway / 30);
@@ -228,12 +229,10 @@ export default function Home() {
     const featuredEvent = scored.length > 0 ? scored[0].event : null;
     const featuredId = featuredEvent?.id;
 
-    // Upcoming: only future events, excluding the featured one, sorted by nearest date
     const upcoming = filteredEvents
       .filter((e) => e.id !== featuredId && new Date(e.dateTime).getTime() >= now)
       .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
 
-    // Past events: already finished, sorted by most recent first
     const pastEvents = filteredEvents
       .filter((e) => new Date(e.dateTime).getTime() < now)
       .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
@@ -259,15 +258,70 @@ export default function Home() {
           ICMA.IO
         </div>
 
-        <div className="hidden sm:flex items-center border-2 border-[var(--border)] rounded px-3 py-1.5 gap-2 w-72">
+        <div className="hidden sm:flex items-center border-2 border-[var(--border)] rounded px-3 py-1.5 gap-2 w-72 relative">
           <SearchIcon />
           <input
             type="text"
             placeholder="Search_Events..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
             className="bg-transparent outline-none text-sm font-mono w-full"
           />
+          {searchQuery.trim() && (
+            <button onClick={() => setSearchQuery("")} className="text-[var(--muted)] hover:text-[var(--foreground)] flex-shrink-0">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+            </button>
+          )}
+
+          {/* Search Dropdown */}
+          {searchFocused && searchQuery.trim() && (
+            <div className="absolute top-full left-0 right-0 mt-1 border-2 border-[var(--border)] bg-white shadow-[4px_4px_0px_var(--border)] max-h-80 overflow-y-auto z-[60]">
+              {filteredEvents.length === 0 ? (
+                <div className="px-4 py-6 text-center text-xs font-bold text-[var(--muted)] uppercase">
+                  No results for &ldquo;{searchQuery}&rdquo;
+                </div>
+              ) : (
+                <>
+                  <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)] border-b border-gray-200">
+                    {filteredEvents.length} {filteredEvents.length === 1 ? "result" : "results"}
+                  </div>
+                  {filteredEvents.slice(0, 8).map((e) => (
+                    <a
+                      key={e.id}
+                      href={`/event/${e.id}`}
+                      className="flex items-start gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="w-10 h-10 bg-gray-200 rounded flex-shrink-0 overflow-hidden">
+                        {e.bannerUrl ? (
+                          <img src={e.bannerUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold truncate">{e.title}</div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] font-bold px-1.5 py-0 border border-[var(--border)] bg-gray-50">{e.eventType.toUpperCase()}</span>
+                          <span className="text-[10px] text-[var(--muted)]">{e.category}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] text-[var(--muted)] flex-shrink-0">
+                        <ThumbsUpIcon />
+                        {e.upvotes}
+                      </div>
+                    </a>
+                  ))}
+                  {filteredEvents.length > 8 && (
+                    <div className="px-3 py-2 text-[10px] font-bold text-center text-[var(--muted)] border-t border-gray-200">
+                      +{filteredEvents.length - 8} more results
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
@@ -429,25 +483,90 @@ export default function Home() {
         {/* Main Content */}
         <main className="flex-1 p-6 lg:p-8">
           {!loaded ? (
-            <div className="py-16 text-center text-sm font-bold text-[var(--muted)]">Loading events...</div>
-          ) : events.length === 0 ? (
-            <div className="py-16 text-center">
-              <h2 className="text-2xl font-bold uppercase tracking-tight mb-3">No Events Yet</h2>
-              <p className="text-sm text-[var(--muted)] mb-6">Be the first to create an event on ICMA.IO</p>
-              <a href="/join" className="bg-[var(--accent)] border-2 border-[var(--border)] px-6 py-3 text-sm font-bold hover:bg-[var(--accent-hover)] transition-colors">
-                GET STARTED
-              </a>
-            </div>
+            <>
+              {/* Featured skeleton */}
+              <div className="mb-10">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-52 h-7 bg-gray-200 animate-pulse rounded" />
+                  <div className="flex gap-2">
+                    <div className="w-8 h-8 bg-gray-200 animate-pulse rounded" />
+                    <div className="w-8 h-8 bg-gray-200 animate-pulse rounded" />
+                  </div>
+                </div>
+                <div className="border-2 border-gray-200 flex flex-col md:flex-row overflow-hidden">
+                  <div className="md:w-1/2 bg-gray-200 animate-pulse min-h-[280px]" />
+                  <div className="md:w-1/2 p-6 flex flex-col justify-between">
+                    <div>
+                      <div className="flex gap-2 mb-3">
+                        <div className="w-16 h-5 bg-gray-200 animate-pulse rounded" />
+                        <div className="w-28 h-5 bg-gray-200 animate-pulse rounded" />
+                      </div>
+                      <div className="w-3/4 h-8 bg-gray-200 animate-pulse rounded mb-3" />
+                      <div className="space-y-2 mb-4">
+                        <div className="w-full h-4 bg-gray-100 animate-pulse rounded" />
+                        <div className="w-full h-4 bg-gray-100 animate-pulse rounded" />
+                        <div className="w-2/3 h-4 bg-gray-100 animate-pulse rounded" />
+                      </div>
+                      <div className="flex gap-4">
+                        <div className="w-28 h-3 bg-gray-100 animate-pulse rounded" />
+                        <div className="w-24 h-3 bg-gray-100 animate-pulse rounded" />
+                      </div>
+                    </div>
+                    <div className="border-t-2 border-gray-200 pt-4 flex items-center justify-between mt-4">
+                      <div className="w-16 h-8 bg-gray-200 animate-pulse rounded" />
+                      <div className="w-28 h-9 bg-gray-200 animate-pulse rounded" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Upcoming grid skeleton */}
+              <div>
+                <div className="w-48 h-7 bg-gray-200 animate-pulse rounded mb-5" />
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="border-2 border-gray-200 flex flex-col overflow-hidden">
+                      <div className="bg-gray-200 animate-pulse h-44" />
+                      <div className="p-4 flex flex-col flex-1">
+                        <div className="w-3/4 h-5 bg-gray-200 animate-pulse rounded mb-2" />
+                        <div className="w-full h-3 bg-gray-100 animate-pulse rounded mb-1" />
+                        <div className="w-2/3 h-3 bg-gray-100 animate-pulse rounded mb-3" />
+                        <div className="flex gap-3 mb-3">
+                          <div className="w-24 h-3 bg-gray-100 animate-pulse rounded" />
+                          <div className="w-20 h-3 bg-gray-100 animate-pulse rounded" />
+                        </div>
+                        <div className="border-t-2 border-gray-200 pt-3 flex items-center justify-between">
+                          <div className="w-12 h-6 bg-gray-200 animate-pulse rounded" />
+                          <div className="w-24 h-7 bg-gray-200 animate-pulse rounded" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
           ) : filteredEvents.length === 0 ? (
             <div className="py-16 text-center">
-              <h2 className="text-2xl font-bold uppercase tracking-tight mb-3">No Matching Events</h2>
-              <p className="text-sm text-[var(--muted)] mb-6">Try adjusting your filters or search query</p>
-              <button
-                onClick={clearFilters}
-                className="bg-[var(--accent)] border-2 border-[var(--border)] px-6 py-3 text-sm font-bold hover:bg-[var(--accent-hover)] transition-colors"
-              >
-                CLEAR_FILTERS
-              </button>
+              <h2 className="text-2xl font-bold uppercase tracking-tight mb-3">
+                {searchQuery ? "No Results Found" : "No Events Yet"}
+              </h2>
+              <p className="text-sm text-[var(--muted)] mb-6">
+                {searchQuery
+                  ? `No events matching "${searchQuery}"`
+                  : "Be the first to create an event on ICMA.IO"}
+              </p>
+              {searchQuery ? (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="bg-[var(--accent)] border-2 border-[var(--border)] px-6 py-3 text-sm font-bold hover:bg-[var(--accent-hover)] transition-colors"
+                >
+                  CLEAR SEARCH
+                </button>
+              ) : (
+                <a href="/join" className="bg-[var(--accent)] border-2 border-[var(--border)] px-6 py-3 text-sm font-bold hover:bg-[var(--accent-hover)] transition-colors">
+                  GET STARTED
+                </a>
+              )}
             </div>
           ) : (
             <>

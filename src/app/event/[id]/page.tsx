@@ -343,8 +343,8 @@ export default function EventDetailPage() {
                       <QrCodeIcon />
                       View QR Code & Link
                     </button>
-                    <a href="/hackathon/dashboard" className="border-2 border-[var(--border)] bg-white px-4 py-2 text-xs font-bold uppercase hover:bg-gray-100 transition-colors">
-                      View Submissions
+                    <a href={`/event/${event.id}/submissions`} className="border-2 border-[var(--border)] bg-white px-4 py-2 text-xs font-bold uppercase hover:bg-gray-100 transition-colors">
+                      View Submissions ({hackathonSession.submissionCount})
                     </a>
                   </div>
                 </div>
@@ -447,7 +447,7 @@ export default function EventDetailPage() {
       {/* Main — skeleton or content */}
       <main className="flex-1 bg-white">
         <div className="max-w-6xl mx-auto px-6 py-8">
-          {renderContent()}
+{renderContent()}
         </div>
       </main>
 
