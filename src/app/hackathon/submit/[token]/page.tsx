@@ -231,12 +231,7 @@ export default function HackathonSubmitPage({ params }: PageProps) {
     <div className="min-h-screen flex flex-col">
       <header className="border-b-2 border-[var(--border)] px-6 py-3 flex items-center justify-between sticky top-0 bg-white z-50">
         <div className="flex items-center gap-2 font-bold text-lg tracking-tight">
-          <div className="w-8 h-8 rounded-full border-2 border-[var(--border)] flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 8v8M8 12h8" />
-            </svg>
-          </div>
+          <img src="/icma_logo.svg" alt="ICMA.IO" className="w-7 h-7" />
           ICMA.IO
         </div>
         <span className="text-xs font-bold text-[var(--muted)] uppercase">{status.eventName}</span>
