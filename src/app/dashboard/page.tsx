@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useSession, signOut } from "next-auth/react";
+import { redirect } from "next/navigation";
 
 const EVENTS = [
   { status: "LIVE", title: "Weekly Builder Hangout", date: "Oct 12, 2023", rsvps: 42 },
@@ -88,9 +90,22 @@ function DotsIcon() {
 }
 
 export default function DashboardPage() {
+  const { data: session, status } = useSession();
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 5;
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center font-bold text-sm">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!session) {
+    redirect("/login");
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -106,11 +121,14 @@ export default function DashboardPage() {
           ICMA.IO
         </a>
         <div className="flex items-center gap-4">
-          <span className="text-sm font-bold hidden sm:inline">ADMIN USER</span>
+          <span className="text-sm font-bold hidden sm:inline">{session.user.name}</span>
           <div className="w-9 h-9 border-2 border-[var(--border)] rounded-full flex items-center justify-center">
             <UserIcon />
           </div>
-          <button className="border-2 border-[var(--border)] px-4 py-1.5 text-sm font-bold hover:bg-gray-100 transition-colors">
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="border-2 border-[var(--border)] px-4 py-1.5 text-sm font-bold hover:bg-gray-100 transition-colors"
+          >
             LOGOUT
           </button>
         </div>

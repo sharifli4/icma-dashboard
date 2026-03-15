@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useSession, signOut } from "next-auth/react";
+import { redirect } from "next/navigation";
 
 function UploadIcon() {
   return (
@@ -38,6 +40,8 @@ export default function CreateEventPage() {
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const { data: session, status } = useSession();
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragActive(false);
@@ -49,6 +53,18 @@ export default function CreateEventPage() {
     const file = e.target.files?.[0];
     if (file) setBannerFile(file);
   };
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center font-bold text-sm">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!session) {
+    redirect("/login");
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -64,11 +80,14 @@ export default function CreateEventPage() {
           ICMA.IO
         </a>
         <div className="flex items-center gap-4">
-          <span className="text-sm font-bold hidden sm:inline">ADMIN USER</span>
+          <span className="text-sm font-bold hidden sm:inline">{session.user.name}</span>
           <div className="w-9 h-9 border-2 border-[var(--border)] rounded-full flex items-center justify-center">
             <UserIcon />
           </div>
-          <button className="border-2 border-[var(--border)] px-4 py-1.5 text-sm font-bold hover:bg-gray-100 transition-colors">
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="border-2 border-[var(--border)] px-4 py-1.5 text-sm font-bold hover:bg-gray-100 transition-colors"
+          >
             LOGOUT
           </button>
         </div>
