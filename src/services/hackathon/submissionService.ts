@@ -1,6 +1,6 @@
 import { getORM } from "@/db";
-import { HackathonProjectSubmission } from "@/db/entities/HackathonProjectSubmission";
-import { HackathonSubmissionSession } from "@/db/entities/HackathonSubmissionSession";
+import type { HackathonProjectSubmission } from "@/db/entities/HackathonProjectSubmission";
+import type { HackathonSubmissionSession } from "@/db/entities/HackathonSubmissionSession";
 import { uploadDemoVideo, validateVideoFile } from "@/services/hackathon/uploadService";
 import { isValidUrl, nonEmptyString } from "@/lib/validation";
 import type { CreateHackathonSubmissionInput, HackathonSubmissionData } from "@/shared/hackathon/contracts";
@@ -15,7 +15,7 @@ function toSubmissionData(submission: HackathonProjectSubmission, sessionId: num
     demoUrl: submission.demoUrl,
     demoVideoUrl: submission.demoVideoPublicUrl,
     githubUrl: submission.githubUrl,
-    createdAt: submission.createdAt.toISOString(),
+    createdAt: submission.createdAt?.toISOString() ?? new Date().toISOString(),
   };
 }
 
@@ -42,7 +42,7 @@ export async function createSubmissionByToken(
 
   const orm = await getORM();
   const em = orm.em.fork();
-  const session = await em.findOne(HackathonSubmissionSession, { token });
+  const session = await em.findOne<HackathonSubmissionSession>("HackathonSubmissionSession", { token });
   if (!session) {
     throw new HackathonServiceError("Submission session not found", 404);
   }
@@ -52,7 +52,7 @@ export async function createSubmissionByToken(
     throw new HackathonServiceError("Submission session is not active", 400);
   }
 
-  const existing = await em.findOne(HackathonProjectSubmission, { session, team: input.team.trim() });
+  const existing = await em.findOne<HackathonProjectSubmission>("HackathonProjectSubmission", { session, team: input.team.trim() });
   if (existing) {
     throw new HackathonServiceError("This team has already submitted for this session", 409);
   }
@@ -68,7 +68,7 @@ export async function createSubmissionByToken(
     throw new HackathonServiceError(message, 500);
   }
 
-  const submission = em.create(HackathonProjectSubmission, {
+  const submission = em.create<HackathonProjectSubmission>("HackathonProjectSubmission", {
     session,
     projectName: input.projectName.trim(),
     team: input.team.trim(),
@@ -91,11 +91,11 @@ export async function listSubmissionsByToken(token: string): Promise<HackathonSu
   const orm = await getORM();
   const em = orm.em.fork();
 
-  const session = await em.findOne(HackathonSubmissionSession, { token });
+  const session = await em.findOne<HackathonSubmissionSession>("HackathonSubmissionSession", { token });
   if (!session) {
     throw new HackathonServiceError("Submission session not found", 404);
   }
 
-  const submissions = await em.find(HackathonProjectSubmission, { session });
+  const submissions = await em.find<HackathonProjectSubmission>("HackathonProjectSubmission", { session });
   return submissions.map((s) => toSubmissionData(s, session.id));
 }

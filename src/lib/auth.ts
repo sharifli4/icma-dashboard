@@ -2,7 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { getORM } from "@/db";
-import { User } from "@/db/entities/User";
+import type { User } from "@/db/entities/User";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -17,7 +17,7 @@ export const authOptions: NextAuthOptions = {
 
         const orm = await getORM();
         const em = orm.em.fork();
-        const user = await em.findOne(User, { email: credentials.email });
+        const user = await em.findOne<User>("User", { email: credentials.email });
 
         if (!user) return null;
 

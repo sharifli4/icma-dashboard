@@ -1,31 +1,28 @@
-import { Entity, ManyToOne, OptionalProps, PrimaryKey, Property } from "@mikro-orm/core";
-import { User } from "./User";
+import { EntitySchema } from "@mikro-orm/core";
+import type { User } from "./User";
 
-@Entity({ tableName: "community_profile" })
-export class CommunityProfile {
-  [OptionalProps]?: "createdAt" | "description" | "logoUrl" | "websiteUrl" | "socialUrl";
-
-  @PrimaryKey({ type: "int" })
-  id!: number;
-
-  @ManyToOne(() => User, { unique: true })
-  user!: User;
-
-  @Property({ type: "string" })
-  communityName!: string;
-
-  @Property({ type: "text", default: "" })
-  description: string = "";
-
-  @Property({ type: "string", nullable: true })
+export interface CommunityProfile {
+  id: number;
+  user: User;
+  communityName: string;
+  description?: string;
   logoUrl?: string;
-
-  @Property({ type: "string", nullable: true })
   websiteUrl?: string;
-
-  @Property({ type: "string", nullable: true })
   socialUrl?: string;
-
-  @Property({ type: "Date" })
-  createdAt: Date = new Date();
+  createdAt?: Date;
 }
+
+export const CommunityProfileSchema = new EntitySchema<CommunityProfile>({
+  name: "CommunityProfile",
+  tableName: "community_profile",
+  properties: {
+    id: { type: "int", primary: true },
+    user: { kind: "m:1", entity: "User", unique: true },
+    communityName: { type: "string" },
+    description: { type: "text", default: "" },
+    logoUrl: { type: "string", nullable: true },
+    websiteUrl: { type: "string", nullable: true },
+    socialUrl: { type: "string", nullable: true },
+    createdAt: { type: "Date", onCreate: () => new Date() },
+  },
+});

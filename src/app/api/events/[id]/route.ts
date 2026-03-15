@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getORM } from "@/db";
-import { CommunityEvent } from "@/db/entities/Event";
+import type { CommunityEvent } from "@/db/entities/Event";
 
 export const runtime = "nodejs";
 
@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
   const orm = await getORM();
   const em = orm.em.fork();
-  const event = await em.findOne(CommunityEvent, { id: eventId }, { populate: ["user"] });
+  const event = await em.findOne<CommunityEvent>("CommunityEvent", { id: eventId }, { populate: ["user"] as never[] });
 
   if (!event) {
     return NextResponse.json({ error: "Event not found" }, { status: 404 });
@@ -39,7 +39,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
       upvotes: event.upvotes,
       status: event.status,
       organizer: event.user.name,
-      createdAt: event.createdAt.toISOString(),
+      createdAt: event.createdAt?.toISOString() ?? new Date().toISOString(),
     },
   });
 }
@@ -54,7 +54,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
   const { id } = await params;
   const orm = await getORM();
   const em = orm.em.fork();
-  const event = await em.findOne(CommunityEvent, { id: Number(id), user: { id: Number(session.user.id) } });
+  const event = await em.findOne<CommunityEvent>("CommunityEvent", { id: Number(id), user: { id: Number(session.user.id) } });
 
   if (!event) {
     return NextResponse.json({ error: "Event not found" }, { status: 404 });
@@ -75,7 +75,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const body = await request.json();
   const orm = await getORM();
   const em = orm.em.fork();
-  const event = await em.findOne(CommunityEvent, { id: Number(id), user: { id: Number(session.user.id) } });
+  const event = await em.findOne<CommunityEvent>("CommunityEvent", { id: Number(id), user: { id: Number(session.user.id) } });
 
   if (!event) {
     return NextResponse.json({ error: "Event not found" }, { status: 404 });

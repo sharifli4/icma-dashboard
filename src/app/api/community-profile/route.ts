@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getORM } from "@/db";
-import { User } from "@/db/entities/User";
-import { CommunityProfile } from "@/db/entities/CommunityProfile";
+import type { User } from "@/db/entities/User";
+import type { CommunityProfile } from "@/db/entities/CommunityProfile";
 
 export const runtime = "nodejs";
 
@@ -16,7 +16,7 @@ export async function GET() {
   const orm = await getORM();
   const em = orm.em.fork();
 
-  const profile = await em.findOne(CommunityProfile, { user: { id: Number(session.user.id) } });
+  const profile = await em.findOne<CommunityProfile>("CommunityProfile", { user: { id: Number(session.user.id) } });
 
   if (!profile) {
     return NextResponse.json({ data: null });
@@ -51,11 +51,11 @@ export async function PUT(request: NextRequest) {
   const em = orm.em.fork();
   const userId = Number(session.user.id);
 
-  let profile = await em.findOne(CommunityProfile, { user: { id: userId } });
+  let profile = await em.findOne<CommunityProfile>("CommunityProfile", { user: { id: userId } });
 
   if (!profile) {
-    const user = await em.findOneOrFail(User, { id: userId });
-    profile = em.create(CommunityProfile, {
+    const user = await em.findOneOrFail<User>("User", { id: userId });
+    profile = em.create<CommunityProfile>("CommunityProfile", {
       user,
       communityName,
       description: description || "",

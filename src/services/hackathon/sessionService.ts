@@ -1,6 +1,6 @@
 import { randomBytes } from "crypto";
 import { getORM } from "@/db";
-import { HackathonSubmissionSession } from "@/db/entities/HackathonSubmissionSession";
+import type { HackathonSubmissionSession } from "@/db/entities/HackathonSubmissionSession";
 import type {
   CreateHackathonSessionInput,
   CreateHackathonSessionResult,
@@ -24,7 +24,7 @@ function toSessionData(session: HackathonSubmissionSession): HackathonSessionDat
     submitPath: session.submitPath,
     startDate: session.startDate.toISOString(),
     endDate: session.endDate.toISOString(),
-    createdAt: session.createdAt.toISOString(),
+    createdAt: session.createdAt?.toISOString() ?? new Date().toISOString(),
   };
 }
 
@@ -48,7 +48,7 @@ export async function createSession(input: CreateHackathonSessionInput): Promise
 
   const orm = await getORM();
   const em = orm.em.fork();
-  const session = em.create(HackathonSubmissionSession, {
+  const session = em.create<HackathonSubmissionSession>("HackathonSubmissionSession", {
     eventName: input.eventName.trim(),
     token,
     submitPath,
@@ -68,7 +68,7 @@ export async function createSession(input: CreateHackathonSessionInput): Promise
 export async function listSessions(): Promise<HackathonSessionData[]> {
   const orm = await getORM();
   const em = orm.em.fork();
-  const sessions = await em.findAll(HackathonSubmissionSession, { orderBy: { createdAt: "DESC" } });
+  const sessions = await em.findAll<HackathonSubmissionSession>("HackathonSubmissionSession", { orderBy: { createdAt: "DESC" } });
   return sessions.map(toSessionData);
 }
 
@@ -86,7 +86,7 @@ export async function getSession(idOrToken: string): Promise<HackathonSessionDat
       ? { id: numericId }
       : { token: idOrToken };
 
-  const session = await em.findOne(HackathonSubmissionSession, where);
+  const session = await em.findOne<HackathonSubmissionSession>("HackathonSubmissionSession", where);
   if (!session) {
     throw new HackathonServiceError("Session not found", 404);
   }
@@ -102,7 +102,7 @@ export async function getSessionStatus(token: string): Promise<HackathonSessionS
   const orm = await getORM();
   const em = orm.em.fork();
 
-  const session = await em.findOne(HackathonSubmissionSession, { token });
+  const session = await em.findOne<HackathonSubmissionSession>("HackathonSubmissionSession", { token });
   if (!session) {
     throw new HackathonServiceError("Session not found", 404);
   }

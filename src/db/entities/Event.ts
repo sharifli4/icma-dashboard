@@ -1,49 +1,40 @@
-import { Entity, ManyToOne, OptionalProps, PrimaryKey, Property } from "@mikro-orm/core";
-import { User } from "./User";
+import { EntitySchema } from "@mikro-orm/core";
+import type { User } from "./User";
 
-@Entity({ tableName: "event" })
-export class CommunityEvent {
-  [OptionalProps]?: "createdAt" | "description" | "bannerUrl" | "registrationUrl" | "hackathonEnabled" | "upvotes" | "status" | "location";
-
-  @PrimaryKey({ type: "int" })
-  id!: number;
-
-  @ManyToOne(() => User)
-  user!: User;
-
-  @Property({ type: "string" })
-  title!: string;
-
-  @Property({ type: "text", default: "" })
-  description: string = "";
-
-  @Property({ type: "string", nullable: true })
+export interface CommunityEvent {
+  id: number;
+  user: User;
+  title: string;
+  description?: string;
   bannerUrl?: string;
-
-  @Property({ type: "Date" })
-  dateTime!: Date;
-
-  @Property({ type: "string" })
-  eventType!: string;
-
-  @Property({ type: "string" })
-  category!: string;
-
-  @Property({ type: "string", nullable: true })
+  dateTime: Date;
+  eventType: string;
+  category: string;
   location?: string;
-
-  @Property({ type: "string", nullable: true })
   registrationUrl?: string;
-
-  @Property({ type: "boolean", default: false })
-  hackathonEnabled: boolean = false;
-
-  @Property({ type: "int", default: 0 })
-  upvotes: number = 0;
-
-  @Property({ type: "string", default: "DRAFT" })
-  status: string = "DRAFT";
-
-  @Property({ type: "Date" })
-  createdAt: Date = new Date();
+  hackathonEnabled?: boolean;
+  upvotes?: number;
+  status?: string;
+  createdAt?: Date;
 }
+
+export const CommunityEventSchema = new EntitySchema<CommunityEvent>({
+  name: "CommunityEvent",
+  tableName: "event",
+  properties: {
+    id: { type: "int", primary: true },
+    user: { kind: "m:1", entity: "User" },
+    title: { type: "string" },
+    description: { type: "text", default: "" },
+    bannerUrl: { type: "string", nullable: true },
+    dateTime: { type: "Date" },
+    eventType: { type: "string" },
+    category: { type: "string" },
+    location: { type: "string", nullable: true },
+    registrationUrl: { type: "string", nullable: true },
+    hackathonEnabled: { type: "boolean", default: false },
+    upvotes: { type: "int", default: 0 },
+    status: { type: "string", default: "DRAFT" },
+    createdAt: { type: "Date", onCreate: () => new Date() },
+  },
+});
