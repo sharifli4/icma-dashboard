@@ -97,7 +97,7 @@ export default function JoinPage() {
     if (result?.error) {
       setError("Registered but login failed. Please login manually.");
     } else {
-      router.push("/dashboard");
+      router.push("/dashboard?welcome=true");
       router.refresh();
     }
   };
