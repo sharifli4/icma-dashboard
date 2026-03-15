@@ -1,8 +1,8 @@
 import { getORM } from "@/db";
 import { HackathonProjectSubmission } from "@/db/entities/HackathonProjectSubmission";
 import { HackathonSubmissionSession } from "@/db/entities/HackathonSubmissionSession";
-import { uploadDemoVideo, validateVideoFile } from "@/lib/hackathon/upload";
-import { isValidUrl, nonEmptyString } from "@/lib/hackathon/validation";
+import { uploadDemoVideo, validateVideoFile } from "@/services/hackathon/uploadService";
+import { isValidUrl, nonEmptyString } from "@/lib/validation";
 import type { CreateHackathonSubmissionInput, HackathonSubmissionData } from "@/shared/hackathon/contracts";
 import { HackathonServiceError } from "./errors";
 

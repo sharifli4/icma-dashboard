@@ -7,8 +7,8 @@ import type {
   HackathonSessionData,
 } from "@/shared/hackathon/contracts";
 import { HACKATHON_SUBMIT_PATH_PREFIX } from "@/shared/hackathon/constants";
-import { toQrSvg } from "@/lib/hackathon/qr";
-import { nonEmptyString, parseDate } from "@/lib/hackathon/validation";
+import { toQrSvg } from "@/lib/qr";
+import { nonEmptyString, parseDate } from "@/lib/validation";
 import { HackathonServiceError } from "./errors";
 
 function createToken(): string {
