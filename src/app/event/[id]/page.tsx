@@ -113,8 +113,85 @@ export default function EventDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center font-bold text-sm">
-        Loading...
+      <div className="min-h-screen flex flex-col">
+        {/* Navbar skeleton */}
+        <header className="border-b-2 border-[var(--border)] px-6 py-3 flex items-center justify-between bg-white">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded bg-gray-200 animate-pulse" />
+            <div className="w-20 h-5 bg-gray-200 animate-pulse rounded" />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-20 h-9 bg-gray-200 animate-pulse rounded" />
+            <div className="w-24 h-9 bg-gray-200 animate-pulse rounded" />
+          </div>
+        </header>
+
+        <main className="flex-1 bg-white">
+          <div className="max-w-6xl mx-auto px-6 py-8">
+            <div className="flex flex-col lg:flex-row gap-8">
+              {/* Left column skeleton */}
+              <div className="flex-1">
+                {/* Banner skeleton */}
+                <div className="border-2 border-gray-200 mb-8 overflow-hidden">
+                  <div className="h-48 bg-gray-200 animate-pulse" />
+                  <div className="p-6">
+                    <div className="w-24 h-5 bg-gray-200 animate-pulse rounded mb-3" />
+                    <div className="w-3/4 h-10 bg-gray-200 animate-pulse rounded mb-2" />
+                    <div className="w-1/2 h-10 bg-gray-100 animate-pulse rounded" />
+                  </div>
+                </div>
+
+                {/* Overview skeleton */}
+                <div className="mb-8">
+                  <div className="w-24 h-4 bg-gray-200 animate-pulse rounded mb-3" />
+                  <hr className="border-t-2 border-gray-200 mb-4" />
+                  <div className="space-y-2">
+                    <div className="w-full h-4 bg-gray-100 animate-pulse rounded" />
+                    <div className="w-full h-4 bg-gray-100 animate-pulse rounded" />
+                    <div className="w-5/6 h-4 bg-gray-100 animate-pulse rounded" />
+                    <div className="w-full h-4 bg-gray-100 animate-pulse rounded" />
+                    <div className="w-3/4 h-4 bg-gray-100 animate-pulse rounded" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Right sidebar skeleton */}
+              <div className="lg:w-80 flex flex-col gap-4">
+                <div className="h-14 bg-gray-200 animate-pulse rounded border-2 border-gray-200" />
+                <div className="h-14 bg-gray-100 animate-pulse rounded border-2 border-gray-200" />
+
+                {/* Event info skeleton */}
+                <div className="border-2 border-gray-200 p-5">
+                  <div className="w-20 h-3 bg-gray-200 animate-pulse rounded mb-4" />
+                  <hr className="border-t border-gray-100 mb-4" />
+                  <div className="flex flex-col gap-4">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-gray-200 animate-pulse rounded" />
+                        <div>
+                          <div className="w-16 h-2 bg-gray-200 animate-pulse rounded mb-1" />
+                          <div className="w-28 h-4 bg-gray-100 animate-pulse rounded" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Organized by skeleton */}
+                <div className="border-2 border-gray-200 p-5">
+                  <div className="w-24 h-2 bg-gray-200 animate-pulse rounded mb-3" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gray-200 animate-pulse rounded" />
+                    <div>
+                      <div className="w-32 h-4 bg-gray-200 animate-pulse rounded mb-1" />
+                      <div className="w-24 h-2 bg-gray-100 animate-pulse rounded" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
