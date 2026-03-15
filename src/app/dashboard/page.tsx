@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useSession, signOut } from "next-auth/react";
+import { redirect } from "next/navigation";
 
 const EVENTS = [
   { status: "LIVE", title: "Weekly Builder Hangout", date: "Oct 12, 2023", rsvps: 42 },
@@ -88,9 +90,22 @@ function DotsIcon() {
 }
 
 export default function DashboardPage() {
+  const { data: session, status } = useSession();
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 5;
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center font-bold text-sm">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!session) {
+    redirect("/login");
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -103,14 +118,17 @@ export default function DashboardPage() {
               <path d="M12 8v8M8 12h8" />
             </svg>
           </div>
-          DISCOVERY.FEED
+          ICMA.IO
         </a>
         <div className="flex items-center gap-4">
-          <span className="text-sm font-bold hidden sm:inline">ADMIN USER</span>
+          <span className="text-sm font-bold hidden sm:inline">{session.user.name}</span>
           <div className="w-9 h-9 border-2 border-[var(--border)] rounded-full flex items-center justify-center">
             <UserIcon />
           </div>
-          <button className="border-2 border-[var(--border)] px-4 py-1.5 text-sm font-bold hover:bg-gray-100 transition-colors">
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="border-2 border-[var(--border)] px-4 py-1.5 text-sm font-bold hover:bg-gray-100 transition-colors"
+          >
             LOGOUT
           </button>
         </div>
@@ -214,9 +232,9 @@ export default function DashboardPage() {
                   <CalendarIcon />
                   Event Management
                 </h2>
-                <button className="bg-[var(--border)] text-white px-4 py-2 text-xs font-bold flex items-center gap-1 hover:bg-black transition-colors">
+                <a href="/dashboard/create-event" className="bg-[var(--border)] text-white px-4 py-2 text-xs font-bold flex items-center gap-1 hover:bg-black transition-colors">
                   + CREATE NEW EVENT
-                </button>
+                </a>
               </div>
 
               {/* Table Header */}
@@ -282,8 +300,8 @@ export default function DashboardPage() {
       {/* Footer */}
       <footer className="border-t-2 border-[var(--border)] px-6 py-4 flex flex-col sm:flex-row items-center justify-between text-xs text-[var(--muted)] bg-white">
         <div className="flex items-center gap-4 mb-2 sm:mb-0">
-          <span className="font-bold text-[var(--accent)]">DISCOVERY.FEED</span>
-          <span>&copy;2024 Discovery_Feed_Network // System_Status: Online</span>
+          <span className="font-bold text-[var(--accent)]">ICMA.IO</span>
+          <span>&copy;2024 ICMA_Network // System_Status: Online</span>
         </div>
         <div className="flex items-center gap-4">
           <a href="#" className="hover:text-[var(--foreground)] transition-colors">

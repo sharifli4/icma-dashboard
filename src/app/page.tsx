@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 
 const CATEGORIES = ["AI", "Cybersecurity", "Startups", "Product", "Web3", "Data"];
 const TIMELINE_OPTIONS = ["Today", "This Week", "This Month", "Custom Date"];
@@ -103,6 +104,7 @@ function ChevronDownIcon() {
 }
 
 export default function Home() {
+  const { data: session } = useSession();
   const [activeTimeline, setActiveTimeline] = useState("Today");
   const [activeType, setActiveType] = useState("Event");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -137,12 +139,28 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="border-2 border-[var(--border)] px-4 py-1.5 text-sm font-bold hover:bg-gray-100 transition-colors">
-            LOGIN
-          </button>
-          <a href="/join" className="bg-[var(--accent)] border-2 border-[var(--border)] px-4 py-1.5 text-sm font-bold hover:bg-[var(--accent-hover)] transition-colors">
-            JOIN_NOW
-          </a>
+          {session ? (
+            <>
+              <a href="/dashboard" className="text-sm font-bold hover:underline">
+                {session.user.name}
+              </a>
+              <button
+                onClick={() => signOut()}
+                className="border-2 border-[var(--border)] px-4 py-1.5 text-sm font-bold hover:bg-gray-100 transition-colors"
+              >
+                LOGOUT
+              </button>
+            </>
+          ) : (
+            <>
+              <a href="/login" className="border-2 border-[var(--border)] px-4 py-1.5 text-sm font-bold hover:bg-gray-100 transition-colors">
+                LOGIN
+              </a>
+              <a href="/join" className="bg-[var(--accent)] border-2 border-[var(--border)] px-4 py-1.5 text-sm font-bold hover:bg-[var(--accent-hover)] transition-colors">
+                JOIN_NOW
+              </a>
+            </>
+          )}
         </div>
       </header>
 
@@ -369,8 +387,8 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t-2 border-[var(--border)] px-6 py-4 flex flex-col sm:flex-row items-center justify-between text-xs text-[var(--muted)]">
         <div className="flex items-center gap-4 mb-2 sm:mb-0">
-          <span className="font-bold text-[var(--accent)]">DISCOVERY.FEED</span>
-          <span>&copy;2024 Discovery_Feed_Network // System_Status: Online</span>
+          <span className="font-bold text-[var(--accent)]">ICMA.IO</span>
+          <span>&copy;2024 ICMA_Network // System_Status: Online</span>
         </div>
         <div className="flex items-center gap-4">
           <a href="#" className="hover:text-[var(--foreground)] transition-colors">

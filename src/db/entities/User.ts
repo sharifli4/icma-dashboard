@@ -1,7 +1,9 @@
-import { Entity, PrimaryKey, Property } from "@mikro-orm/core";
+import { Entity, OptionalProps, PrimaryKey, Property } from "@mikro-orm/core";
 
 @Entity()
 export class User {
+  [OptionalProps]?: "createdAt";
+
   @PrimaryKey()
   id!: number;
 
@@ -10,6 +12,9 @@ export class User {
 
   @Property({ unique: true })
   email!: string;
+
+  @Property()
+  password!: string;
 
   @Property()
   createdAt: Date = new Date();
