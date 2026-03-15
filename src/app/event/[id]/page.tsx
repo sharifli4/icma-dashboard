@@ -359,6 +359,19 @@ export default function EventDetailPage() {
                   </div>
                 </div>
               )}
+
+              {!isOrganizer && hackathonSession && new Date() > new Date(hackathonSession.endDate) && hackathonSession.submissionCount > 0 && (
+                <div className="mt-6 pt-6 border-t-2 border-[var(--border)]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase text-[var(--muted)]">
+                      {hackathonSession.submissionCount} {hackathonSession.submissionCount === 1 ? "Project" : "Projects"} Submitted
+                    </span>
+                    <a href={`/event/${event.id}/submissions`} className="border-2 border-[var(--border)] bg-white px-4 py-2 text-xs font-bold uppercase hover:bg-gray-100 transition-colors">
+                      View Submissions
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
