@@ -5,7 +5,7 @@ import { User } from "./User";
 export class CommunityProfile {
   [OptionalProps]?: "createdAt" | "description" | "logoUrl" | "websiteUrl" | "socialUrl";
 
-  @PrimaryKey({ type: "number" })
+  @PrimaryKey({ type: "int" })
   id!: number;
 
   @ManyToOne(() => User, { unique: true })

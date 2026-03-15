@@ -5,7 +5,7 @@ import type { HackathonProjectSubmission } from "./HackathonProjectSubmission";
 export class HackathonSubmissionSession {
   [OptionalProps]?: "createdAt";
 
-  @PrimaryKey({ type: "number" })
+  @PrimaryKey({ type: "int" })
   id!: number;
 
   @Property({ type: "string" })
