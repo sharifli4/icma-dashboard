@@ -18,6 +18,17 @@ interface EventData {
   upvotes: number;
 }
 
+interface CommunityData {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string;
+  logo_url?: string;
+  verified?: boolean;
+  memberCount: number;
+  communityUrl: string;
+}
+
 function SearchIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -74,13 +85,41 @@ function ChevronDownIcon() {
   );
 }
 
+function UsersIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function VerifiedIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--accent)" stroke="currentColor" strokeWidth="2">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
+  );
+}
+
+function ExternalLinkIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />
+    </svg>
+  );
+}
+
 export default function Home() {
   const { data: session } = useSession();
   const [activeTimeline, setActiveTimeline] = useState("Today");
   const [activeType, setActiveType] = useState("Event");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [events, setEvents] = useState<EventData[]>([]);
+  const [communities, setCommunities] = useState<CommunityData[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [communitiesLoaded, setCommunitiesLoaded] = useState(false);
   const [votedIds, setVotedIds] = useState<Set<number>>(new Set());
   const [votingId, setVotingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -101,6 +140,16 @@ export default function Home() {
         }
         setLoaded(true);
       });
+
+    fetch("/api/luhive/communities")
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && json.data) {
+          setCommunities(json.data);
+        }
+        setCommunitiesLoaded(true);
+      })
+      .catch(() => setCommunitiesLoaded(true));
   }, []);
 
   const handleVote = async (eventId: number) => {
@@ -592,6 +641,77 @@ export default function Home() {
                   </div>
                 </div>
               )}
+
+              {/* Communities */}
+              <div className="mt-10">
+                <h2 className="text-2xl font-bold uppercase tracking-tight mb-5">
+                  Communities
+                </h2>
+                {!communitiesLoaded ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="border-2 border-gray-200 p-5">
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 rounded-full bg-gray-200 animate-pulse flex-shrink-0" />
+                          <div className="flex-1">
+                            <div className="w-32 h-5 bg-gray-200 animate-pulse rounded mb-2" />
+                            <div className="w-20 h-3 bg-gray-100 animate-pulse rounded" />
+                          </div>
+                        </div>
+                        <div className="mt-3 space-y-1">
+                          <div className="w-full h-3 bg-gray-100 animate-pulse rounded" />
+                          <div className="w-2/3 h-3 bg-gray-100 animate-pulse rounded" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : communities.length === 0 ? (
+                  <div className="border-2 border-dashed border-[var(--border)] p-8 text-center">
+                    <p className="text-[var(--muted)]">No communities available</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                    {communities.map((community) => (
+                      <a
+                        key={community.id}
+                        href={community.communityUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="border-2 border-[var(--border)] p-5 hover:shadow-[4px_4px_0px_var(--border)] transition-shadow group"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 rounded-full border-2 border-[var(--border)] overflow-hidden flex-shrink-0 bg-gray-100">
+                            {community.logo_url ? (
+                              <img src={community.logo_url} alt={community.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center font-black text-lg text-[var(--muted)]">
+                                {community.name.substring(0, 2).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-base font-bold uppercase truncate">{community.name}</h3>
+                              {community.verified && <VerifiedIcon />}
+                              <ExternalLinkIcon />
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-[var(--muted)]">
+                              <UsersIcon />
+                              <span className="font-bold">{community.memberCount.toLocaleString()}</span>
+                              <span>members</span>
+                            </div>
+                          </div>
+                        </div>
+                        {community.description && (
+                          <p className="mt-3 text-xs text-[var(--muted)] leading-relaxed line-clamp-2">
+                            {community.description}
+                          </p>
+                        )}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
             </>
           )}
         </main>
