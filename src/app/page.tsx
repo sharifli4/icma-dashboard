@@ -248,11 +248,11 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navbar */}
-      <header className="border-b-2 border-[var(--border)] px-6 py-3 flex items-center justify-between sticky top-0 bg-white z-50">
-        <div className="flex items-center gap-2 font-bold text-lg tracking-tight">
-          <img src="/icma_logo.svg" alt="ICMA.IO" className="w-7 h-7" />
+      <header className="border-b-2 border-[var(--border)] px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between sticky top-0 bg-white z-50 gap-2">
+        <a href="/" className="flex items-center gap-1.5 sm:gap-2 font-bold text-sm sm:text-lg tracking-tight flex-shrink-0">
+          <img src="/icma_logo.svg" alt="ICMA.IO" className="w-6 h-6 sm:w-7 sm:h-7 flex-shrink-0" />
           ICMA.IO
-        </div>
+        </a>
 
         <div className="hidden sm:flex items-center border-2 border-[var(--border)] rounded px-3 py-1.5 gap-2 w-72 relative">
           <SearchIcon />
@@ -320,11 +320,11 @@ export default function Home() {
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
           {/* Mobile search toggle */}
           <button
             onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-            className="sm:hidden w-9 h-9 border-2 border-[var(--border)] flex items-center justify-center hover:bg-gray-100 transition-colors"
+            className="sm:hidden w-8 h-8 border-2 border-[var(--border)] flex items-center justify-center hover:bg-gray-100 transition-colors"
           >
             <SearchIcon />
           </button>
@@ -335,17 +335,17 @@ export default function Home() {
               </a>
               <button
                 onClick={() => signOut()}
-                className="border-2 border-[var(--border)] px-4 py-1.5 text-sm font-bold hover:bg-gray-100 transition-colors"
+                className="border-2 border-[var(--border)] px-2.5 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-bold hover:bg-gray-100 transition-colors"
               >
                 LOGOUT
               </button>
             </>
           ) : (
             <>
-              <a href="/login" className="border-2 border-[var(--border)] px-4 py-1.5 text-sm font-bold hover:bg-gray-100 transition-colors">
+              <a href="/login" className="border-2 border-[var(--border)] px-2.5 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-bold hover:bg-gray-100 transition-colors">
                 LOGIN
               </a>
-              <a href="/join" className="bg-[var(--accent)] border-2 border-[var(--border)] px-4 py-1.5 text-sm font-bold hover:bg-[var(--accent-hover)] transition-colors">
+              <a href="/join" className="bg-[var(--accent)] border-2 border-[var(--border)] px-2.5 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-bold hover:bg-[var(--accent-hover)] transition-colors whitespace-nowrap">
                 JOIN_NOW
               </a>
             </>
@@ -556,7 +556,7 @@ export default function Home() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 lg:p-8">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
           {!loaded ? (
             <>
               {/* Featured skeleton */}
@@ -649,7 +649,7 @@ export default function Home() {
               {featured && (
                 <div className="mb-10">
                   <div className="flex items-center justify-between mb-5">
-                    <h2 className="text-2xl font-bold uppercase tracking-tight">
+                    <h2 className="text-xl sm:text-2xl font-bold uppercase tracking-tight">
                       Trending_Today
                     </h2>
                     <div className="flex gap-2">
@@ -664,7 +664,7 @@ export default function Home() {
 
                   {/* Featured Card */}
                   <div className="border-2 border-[var(--border)] flex flex-col md:flex-row overflow-hidden">
-                    <div className="md:w-1/2 bg-[#0a1628] flex items-center justify-center p-10 min-h-[280px] overflow-hidden">
+                    <div className="md:w-1/2 bg-[#0a1628] flex items-center justify-center p-6 sm:p-10 min-h-[200px] sm:min-h-[280px] overflow-hidden">
                       {featured.bannerUrl ? (
                         <img src={featured.bannerUrl} alt={featured.title} className="w-full h-full object-cover" />
                       ) : (
@@ -673,23 +673,23 @@ export default function Home() {
                         </div>
                       )}
                     </div>
-                    <div className="md:w-1/2 p-6 flex flex-col justify-between">
-                      <div>
-                        <div className="flex gap-2 mb-3">
-                          <span className="px-2 py-0.5 text-xs font-bold border-2 border-[var(--border)] bg-gray-100">
+                    <div className="md:w-1/2 p-4 sm:p-6 flex flex-col justify-between overflow-hidden">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          <span className="px-2 py-0.5 text-[10px] sm:text-xs font-bold border-2 border-[var(--border)] bg-gray-100">
                             {featured.eventType.toUpperCase()}
                           </span>
-                          <span className="px-2 py-0.5 text-xs font-bold border-2 border-[var(--border)] bg-gray-100">
+                          <span className="px-2 py-0.5 text-[10px] sm:text-xs font-bold border-2 border-[var(--border)] bg-gray-100">
                             {featured.category.toUpperCase()}
                           </span>
                         </div>
-                        <h3 className="text-2xl font-bold uppercase mb-3 leading-tight">
+                        <h3 className="text-xl sm:text-2xl font-bold uppercase mb-3 leading-tight break-words">
                           {featured.title}
                         </h3>
-                        <p className="text-sm text-[var(--muted)] leading-relaxed mb-4 line-clamp-3">
+                        <p className="text-xs sm:text-sm text-[var(--muted)] leading-relaxed mb-4 line-clamp-3">
                           {featured.description || "No description provided."}
                         </p>
-                        <div className="flex items-center gap-4 text-xs text-[var(--muted)] mb-4">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-[var(--muted)] mb-4">
                           <span className="flex items-center gap-1">
                             <CalendarIcon />
                             {new Date(featured.dateTime).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
