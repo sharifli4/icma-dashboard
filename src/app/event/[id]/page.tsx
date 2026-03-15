@@ -146,8 +146,9 @@ export default function EventDetailPage() {
         if (json?.data) {
           setEvent(json.data);
           fetch(`/api/events/${json.data.id}/vote`)
-            .then((r) => r.json())
-            .then((v) => setHasVoted(v.hasVoted));
+            .then((r) => r.ok ? r.json() : null)
+            .then((v) => { if (v) setHasVoted(v.hasVoted); })
+            .catch(() => {});
         }
         setLoading(false);
       });
@@ -183,9 +184,12 @@ export default function EventDetailPage() {
     setVoting(true);
     try {
       const res = await fetch(`/api/events/${event.id}/vote`, { method: "POST" });
+      if (!res.ok) return;
       const data = await res.json();
       setEvent((prev) => prev ? { ...prev, upvotes: data.upvotes } : prev);
       setHasVoted(data.hasVoted);
+    } catch {
+      // Network error — silently ignore
     } finally {
       setVoting(false);
     }
@@ -306,20 +310,28 @@ export default function EventDetailPage() {
                   </div>
                   <p className="text-xs font-bold uppercase text-[var(--muted)]">
                     {hackathonSession ? (
-                      <>Deadline: {new Date(hackathonSession.endDate).toLocaleString()}</>
+                      new Date() < new Date(hackathonSession.startDate) ? (
+                        <>Opens: {new Date(hackathonSession.startDate).toLocaleString()}</>
+                      ) : new Date() > new Date(hackathonSession.endDate) ? (
+                        <>Submissions closed</>
+                      ) : (
+                        <>Deadline: {new Date(hackathonSession.endDate).toLocaleString()}</>
+                      )
                     ) : (
-                      <>Submissions are open</>
+                      <>No active submission session</>
                     )}
                   </p>
                 </div>
-                {hackathonSession ? (
-                  <a href={hackathonSession.submitPath} className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase hover:bg-gray-100 transition-colors flex-shrink-0">
-                    Submit Project
-                  </a>
-                ) : (
-                  <span className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase text-[var(--muted)]">
-                    Submit Project
-                  </span>
+{!isOrganizer && (
+                  hackathonSession && new Date() >= new Date(hackathonSession.startDate) && new Date() <= new Date(hackathonSession.endDate) ? (
+                    <a href={hackathonSession.submitPath} className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase hover:bg-gray-100 transition-colors flex-shrink-0">
+                      Submit Project
+                    </a>
+                  ) : (
+                    <span className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase text-[var(--muted)] cursor-not-allowed">
+                      Submit Project
+                    </span>
+                  )
                 )}
               </div>
 
