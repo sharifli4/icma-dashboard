@@ -1,5 +1,4 @@
 import { Entity, ManyToOne, OptionalProps, PrimaryKey, Property } from "@mikro-orm/core";
-import type { HackathonSubmissionSession } from "./HackathonSubmissionSession";
 
 @Entity()
 export class HackathonProjectSubmission {
@@ -9,7 +8,7 @@ export class HackathonProjectSubmission {
   id!: number;
 
   @ManyToOne("HackathonSubmissionSession")
-  session!: HackathonSubmissionSession;
+  session!: unknown;
 
   @Property()
   projectName!: string;

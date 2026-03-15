@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "lint:cycles": "madge --circular --extensions ts,tsx --ts-config ./tsconfig.json ./src",
     "db:create": "mikro-orm schema:create --run",
     "db:update": "mikro-orm schema:update --run",
     "db:drop": "mikro-orm schema:drop --run"
@@ -35,6 +36,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "eslint-plugin-import": "^2.32.0",
+    "madge": "^8.0.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
