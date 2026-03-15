@@ -214,9 +214,9 @@ export default function DashboardPage() {
                   <CalendarIcon />
                   Event Management
                 </h2>
-                <button className="bg-[var(--border)] text-white px-4 py-2 text-xs font-bold flex items-center gap-1 hover:bg-black transition-colors">
+                <a href="/dashboard/create-event" className="bg-[var(--border)] text-white px-4 py-2 text-xs font-bold flex items-center gap-1 hover:bg-black transition-colors">
                   + CREATE NEW EVENT
-                </button>
+                </a>
               </div>
 
               {/* Table Header */}
