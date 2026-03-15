@@ -1,5 +1,5 @@
 import { Collection, Entity, OneToMany, OptionalProps, PrimaryKey, Property } from "@mikro-orm/core";
-import { HackathonProjectSubmission } from "./HackathonProjectSubmission";
+import type { HackathonProjectSubmission } from "./HackathonProjectSubmission";
 
 @Entity()
 export class HackathonSubmissionSession {
@@ -26,6 +26,6 @@ export class HackathonSubmissionSession {
   @Property({ onCreate: () => new Date() })
   createdAt!: Date;
 
-  @OneToMany(() => HackathonProjectSubmission, (submission) => submission.session)
+  @OneToMany("HackathonProjectSubmission", "session")
   submissions = new Collection<HackathonProjectSubmission>(this);
 }
