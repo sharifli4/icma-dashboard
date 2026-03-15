@@ -1,0 +1,151 @@
+src/lib/hackathon/upload.ts
+  0a9d5ca54951a25b 1-74
+src/db/mikro-orm.config.ts
+  0a9d5ca54951a25b 3-4,7
+src/lib/hackathon/admin.ts
+  0a9d5ca54951a25b 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "3688b41b6eafa52aa10729112d5ee86a94074ebd",
+  "prompts": {
+    "01bdea6ede503df2": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "72b6ca4c-a469-457e-8361-fdc79aa69a47",
+        "model": "gpt-5.3-codex"
+      },
+      "human_author": "kenan <kenansharifov400@gmail.com>",
+      "messages": [],
+      "total_additions": 261,
+      "total_deletions": 1,
+      "accepted_lines": 259,
+      "overriden_lines": 0
+    },
+    "0a9d5ca54951a25b": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "24d0f103-6328-4843-a94e-ac45de32f708",
+        "model": "gpt-5.3-codex"
+      },
+      "human_author": "kenan <kenansharifov400@gmail.com>",
+      "messages": [
+        {
+          "type": "user",
+          "text": "create new feature (api only) that do following. create hackathon API interface. that's responsible to create hackathon project submission session for event. that session will have qr code and as well unique url for hackers to submit their project name, team, demo, project github url. for session there should be start and end date.  needs api doing that process. \nthat feature should be seperate interface to integreate easliy to system.",
+          "timestamp": "2026-03-15T08:36:02.267Z"
+        },
+        {
+          "type": "assistant",
+          "text": "I found this repo is very minimal so far, so I’m checking the existing stack files now and then I’ll ask 1–2 critical choices (URL format and security) before I lock the build plan.",
+          "timestamp": "2026-03-15T08:36:19.974Z"
+        },
+        {
+          "type": "assistant",
+          "text": "I have enough to shape most of it. One last critical choice for correct QR output: the base URL to encode in the unique submission link.",
+          "timestamp": "2026-03-15T08:38:19.733Z"
+        },
+        {
+          "type": "user",
+          "text": "add demo video as well",
+          "timestamp": "2026-03-15T08:47:14.198Z"
+        },
+        {
+          "type": "assistant",
+          "text": "I’ll update the approved plan to include a `demoVideo` field in the submission payload/model and validation so the API supports both demo link and demo video input.",
+          "timestamp": "2026-03-15T08:47:25.725Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Updated the plan to include demo video support in submissions.\n\n### Changes made\n- Submission API body now includes `demoVideoUrl`:\n  - `projectName`, `team`, `demoUrl`, `demoVideoUrl`, `githubUrl`\n- `HackathonProjectSubmission` data model now includes `demoVideoUrl`\n- Validation now checks URL format for:\n  - `demoUrl`, `demoVideoUrl`, and `githubUrl`\n\nIf you want, I can also switch this from `demoVideoUrl` to actual **video file upload** (`multipart/form-data`) in the implementation plan before execution.",
+          "timestamp": "2026-03-15T08:47:39.552Z"
+        },
+        {
+          "type": "user",
+          "text": "yes use file upload",
+          "timestamp": "2026-03-15T08:48:30.054Z"
+        },
+        {
+          "type": "assistant",
+          "text": "To set file-upload correctly, I need one implementation choice that affects the API contract and storage integration.",
+          "timestamp": "2026-03-15T08:48:45.341Z"
+        },
+        {
+          "type": "assistant",
+          "text": "One last choice to finalize the API shape for S3 uploads.",
+          "timestamp": "2026-03-15T08:49:53.173Z"
+        },
+        {
+          "type": "assistant",
+          "text": "I’ll update the plan to use backend-proxy multipart upload to S3-compatible storage and align endpoints/model fields accordingly.",
+          "timestamp": "2026-03-15T08:51:24.939Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Plan updated to use **video file upload** with your selected architecture:\n\n- Storage: **S3-compatible**\n- Flow: **backend-proxy upload** (client sends file to API; API uploads to S3)\n- Submission endpoint now expects `multipart/form-data` with `demoVideo` file\n- Data model updated to store `demoVideoObjectKey` and `demoVideoPublicUrl`\n- Validation updated for video type/size checks\n- Added required S3 env config in plan\n\nIf you’re ready, say **execute plan** and I’ll implement it end-to-end.",
+          "timestamp": "2026-03-15T08:51:31.927Z"
+        },
+        {
+          "type": "user",
+          "text": "Implement the plan as specified, it is attached for your reference. Do NOT edit the plan file itself.\n\nTo-do's from the plan have already been created. Do not create them again. Mark them as in_progress as you work, starting with the first one. Don't stop until you have completed all the to-dos.",
+          "timestamp": "2026-03-15T08:51:39.241Z"
+        },
+        {
+          "type": "assistant",
+          "text": "I’m starting implementation now from the first todo: creating the hackathon entities and wiring their relation, then I’ll proceed through each todo in order and run checks at the end.",
+          "timestamp": "2026-03-15T08:51:44.881Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "todo_write",
+          "input": {}
+        },
+        {
+          "type": "assistant",
+          "text": "I’m adding the two new database entities first (`session` + `submission`) with the relation fields, then I’ll wire them into MikroORM config.",
+          "timestamp": "2026-03-15T08:52:00.355Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "todo_write",
+          "input": {}
+        },
+        {
+          "type": "assistant",
+          "text": "Entities and ORM wiring are done. I’m now implementing the isolated `/api/hackathon/*` endpoints plus shared helpers (admin guard, validation, S3 upload, token/QR generation).",
+          "timestamp": "2026-03-15T08:52:30.106Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Session and submission routes are in place; next I’m installing required packages (`qrcode` and AWS S3 SDK), then I’ll run lint/type checks and fix anything that appears.",
+          "timestamp": "2026-03-15T08:53:42.616Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "todo_write",
+          "input": {}
+        },
+        {
+          "type": "assistant",
+          "text": "Type-check surfaced three issues (MikroORM `createdAt` typing and missing `qrcode` types). I’m fixing those now, then rerunning lint and `tsc`.",
+          "timestamp": "2026-03-15T08:56:14.003Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "todo_write",
+          "input": {}
+        },
+        {
+          "type": "assistant",
+          "text": "Implemented the full Hackathon API feature as a separate interface under `/api/hackathon/*`, including session creation, QR generation, tokenized public submissions, and backend-proxy demo video upload to S3-compatible storage.\n\n### What was added\n\n- **New entities**\n  - `src/db/entities/HackathonSubmissionSession.ts`\n  - `src/db/entities/HackathonProjectSubmission.ts`\n- **ORM registration**\n  - Updated `src/db/mikro-orm.config.ts` to include both new entities.\n- **Hackathon API routes**\n  - `POST /api/hackathon/sessions` in `src/app/api/hackathon/sessions/route.ts`\n    - Admin-only (header `x-admin-api-key`)\n    - Validates `eventId`, `startDate`, `endDate`\n    - Generates token + `submitPath` (`/hackathon/submit/{token}`)\n    - Returns `qrCodeSvg`\n  - `GET /api/hackathon/sessions/:id` in `src/app/api/hackathon/sessions/[id]/route.ts`\n    - Admin-only\n    - Returns session details\n  - `POST /api/hackathon/sessions/:token/submissions` in `src/app/api/hackathon/sessions/[token]/submissions/route.ts`\n    - Public endpoint\n    - Accepts `multipart/form-data`:\n      - `projectName`, `team`, `demoUrl`, `githubUrl`, `demoVideo` (file)\n    - Enforces active session window\n    - Uploads video to S3-compatible storage\n    - Persists submission with `demoVideoObjectKey` + `demoVideoPublicUrl`\n- **Shared hackathon utilities**\n  - `src/lib/hackathon/admin.ts`\n  - `src/lib/hackathon/validation.ts`\n  - `src/lib/hackathon/qr.ts`\n  - `src/lib/hackathon/upload.ts`\n\n### Dependencies added\n\n- `@aws-sdk/client-s3`\n- `qrcode`\n- `@types/qrcode` (dev)\n\n### Required env vars\n\n- `HACKATHON_ADMIN_API_KEY`\n- `S3_ENDPOINT`\n- `S3_REGION`\n- `S3_BUCKET`\n- `S3_ACCESS_KEY_ID`\n- `S3_SECRET_ACCESS_KEY`\n- Optional:\n  - `S3_PUBLIC_BASE_URL`\n  - `S3_FORCE_PATH_STYLE` (defaults to path-style unless set to `false`)\n  - `HACKATHON_DEMO_VIDEO_MAX_BYTES` (defaults to `104857600`)\n\n### Validation/checks completed\n\n- `npm run lint` passed\n- `npx tsc --noEmit` passed\n\nIf you want, I can do a follow-up to add a lightweight API collection (curl/Postman examples) for all three endpoints.",
+          "timestamp": "2026-03-15T08:57:28.273Z"
+        }
+      ],
+      "total_additions": 418,
+      "total_deletions": 8,
+      "accepted_lines": 412,
+      "overriden_lines": 0
+    }
+  }
+}
