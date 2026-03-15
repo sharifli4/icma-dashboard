@@ -4,9 +4,10 @@ import { HackathonSubmissionSession } from "./entities/HackathonSubmissionSessio
 import { HackathonProjectSubmission } from "./entities/HackathonProjectSubmission";
 import { CommunityProfile } from "./entities/CommunityProfile";
 import { CommunityEvent } from "./entities/Event";
+import { EventVote } from "./entities/EventVote";
 
 export default defineConfig({
-  entities: [User, HackathonSubmissionSession, HackathonProjectSubmission, CommunityProfile, CommunityEvent],
+  entities: [User, HackathonSubmissionSession, HackathonProjectSubmission, CommunityProfile, CommunityEvent, EventVote],
   clientUrl: process.env.DATABASE_URL,
   driverOptions: {
     connection: {
