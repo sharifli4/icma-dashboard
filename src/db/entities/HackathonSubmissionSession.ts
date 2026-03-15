@@ -5,25 +5,25 @@ import type { HackathonProjectSubmission } from "./HackathonProjectSubmission";
 export class HackathonSubmissionSession {
   [OptionalProps]?: "createdAt";
 
-  @PrimaryKey()
+  @PrimaryKey({ type: "number" })
   id!: number;
 
-  @Property()
+  @Property({ type: "string" })
   eventName!: string;
 
-  @Property({ unique: true, length: 64 })
+  @Property({ type: "string", unique: true, length: 64 })
   token!: string;
 
-  @Property({ unique: true })
+  @Property({ type: "string", unique: true })
   submitPath!: string;
 
-  @Property()
+  @Property({ type: "Date" })
   startDate!: Date;
 
-  @Property()
+  @Property({ type: "Date" })
   endDate!: Date;
 
-  @Property({ onCreate: () => new Date() })
+  @Property({ type: "Date", onCreate: () => new Date() })
   createdAt!: Date;
 
   @OneToMany("HackathonProjectSubmission", "session")

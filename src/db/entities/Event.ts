@@ -5,45 +5,45 @@ import { User } from "./User";
 export class CommunityEvent {
   [OptionalProps]?: "createdAt" | "description" | "bannerUrl" | "registrationUrl" | "hackathonEnabled" | "upvotes" | "status" | "location";
 
-  @PrimaryKey()
+  @PrimaryKey({ type: "number" })
   id!: number;
 
   @ManyToOne(() => User)
   user!: User;
 
-  @Property()
+  @Property({ type: "string" })
   title!: string;
 
   @Property({ type: "text", default: "" })
   description: string = "";
 
-  @Property({ nullable: true })
+  @Property({ type: "string", nullable: true })
   bannerUrl?: string;
 
-  @Property()
+  @Property({ type: "Date" })
   dateTime!: Date;
 
-  @Property()
+  @Property({ type: "string" })
   eventType!: string;
 
-  @Property()
+  @Property({ type: "string" })
   category!: string;
 
-  @Property({ nullable: true })
+  @Property({ type: "string", nullable: true })
   location?: string;
 
-  @Property({ nullable: true })
+  @Property({ type: "string", nullable: true })
   registrationUrl?: string;
 
-  @Property({ default: false })
+  @Property({ type: "boolean", default: false })
   hackathonEnabled: boolean = false;
 
-  @Property({ default: 0 })
+  @Property({ type: "number", default: 0 })
   upvotes: number = 0;
 
-  @Property({ default: "DRAFT" })
+  @Property({ type: "string", default: "DRAFT" })
   status: string = "DRAFT";
 
-  @Property()
+  @Property({ type: "Date" })
   createdAt: Date = new Date();
 }
