@@ -6,6 +6,19 @@ import { isValidUrl, nonEmptyString } from "@/lib/validation";
 import type { CreateHackathonSubmissionInput, HackathonSubmissionData } from "@/shared/hackathon/contracts";
 import { HackathonServiceError } from "./errors";
 
+function toSubmissionData(submission: HackathonProjectSubmission, sessionId: number): HackathonSubmissionData {
+  return {
+    id: submission.id,
+    sessionId,
+    projectName: submission.projectName,
+    team: submission.team,
+    demoUrl: submission.demoUrl,
+    demoVideoUrl: submission.demoVideoPublicUrl,
+    githubUrl: submission.githubUrl,
+    createdAt: submission.createdAt.toISOString(),
+  };
+}
+
 export async function createSubmissionByToken(
   token: string,
   input: CreateHackathonSubmissionInput
@@ -39,6 +52,11 @@ export async function createSubmissionByToken(
     throw new HackathonServiceError("Submission session is not active", 400);
   }
 
+  const existing = await em.findOne(HackathonProjectSubmission, { session, team: input.team.trim() });
+  if (existing) {
+    throw new HackathonServiceError("This team has already submitted for this session", 409);
+  }
+
   let uploadedVideo: { objectKey: string; publicUrl: string };
   try {
     uploadedVideo = await uploadDemoVideo({
@@ -62,14 +80,22 @@ export async function createSubmissionByToken(
 
   await em.persistAndFlush(submission);
 
-  return {
-    id: submission.id,
-    sessionId: session.id,
-    projectName: submission.projectName,
-    team: submission.team,
-    demoUrl: submission.demoUrl,
-    demoVideoUrl: submission.demoVideoPublicUrl,
-    githubUrl: submission.githubUrl,
-    createdAt: submission.createdAt.toISOString(),
-  };
+  return toSubmissionData(submission, session.id);
+}
+
+export async function listSubmissionsByToken(token: string): Promise<HackathonSubmissionData[]> {
+  if (!nonEmptyString(token)) {
+    throw new HackathonServiceError("Invalid token", 400);
+  }
+
+  const orm = await getORM();
+  const em = orm.em.fork();
+
+  const session = await em.findOne(HackathonSubmissionSession, { token });
+  if (!session) {
+    throw new HackathonServiceError("Submission session not found", 404);
+  }
+
+  const submissions = await em.find(HackathonProjectSubmission, { session });
+  return submissions.map((s) => toSubmissionData(s, session.id));
 }

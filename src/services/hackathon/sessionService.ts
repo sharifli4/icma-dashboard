@@ -64,6 +64,13 @@ export async function createSession(input: CreateHackathonSessionInput): Promise
   };
 }
 
+export async function listSessions(): Promise<HackathonSessionData[]> {
+  const orm = await getORM();
+  const em = orm.em.fork();
+  const sessions = await em.findAll(HackathonSubmissionSession, { orderBy: { createdAt: "DESC" } });
+  return sessions.map(toSessionData);
+}
+
 export async function getSession(idOrToken: string): Promise<HackathonSessionData> {
   if (!nonEmptyString(idOrToken)) {
     throw new HackathonServiceError("Session id or token is required", 400);
