@@ -5,7 +5,7 @@ import { User } from "./User";
 export class CommunityEvent {
   [OptionalProps]?: "createdAt" | "description" | "bannerUrl" | "registrationUrl" | "hackathonEnabled" | "upvotes" | "status" | "location";
 
-  @PrimaryKey({ type: "int" })
+  @PrimaryKey({ type: "number" })
   id!: number;
 
   @ManyToOne(() => User)
@@ -38,7 +38,7 @@ export class CommunityEvent {
   @Property({ type: "boolean", default: false })
   hackathonEnabled: boolean = false;
 
-  @Property({ type: "int", default: 0 })
+  @Property({ type: "number", default: 0 })
   upvotes: number = 0;
 
   @Property({ type: "string", default: "DRAFT" })

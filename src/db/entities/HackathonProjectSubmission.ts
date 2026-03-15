@@ -5,7 +5,7 @@ import { HackathonSubmissionSession } from "./HackathonSubmissionSession";
 export class HackathonProjectSubmission {
   [OptionalProps]?: "createdAt";
 
-  @PrimaryKey({ type: "int" })
+  @PrimaryKey({ type: "number" })
   id!: number;
 
   @ManyToOne(() => HackathonSubmissionSession)
