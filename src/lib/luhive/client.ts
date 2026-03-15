@@ -20,13 +20,22 @@ async function fetchFromLuhive<T>(
 ): Promise<LuhiveSuccessResponse<T> | LuhiveErrorResponse> {
   const { apiKey, baseUrl } = getConfig();
 
-  const response = await fetch(`${baseUrl}${path}`, {
+  const url = `${baseUrl}${path}`;
+  const maskedKey = apiKey ? `${apiKey.substring(0, 8)}...${apiKey.substring(apiKey.length - 4)}` : "NOT SET";
+  
+  console.log(`[luhive] Fetching: ${url}`);
+  console.log(`[luhive] API Key: ${maskedKey}`);
+
+  const response = await fetch(url, {
     headers: {
       "x-api-key": apiKey,
     },
   });
 
   if (!response.ok) {
+    const errorBody = await response.text();
+    console.error(`[luhive] Error ${response.status}: ${response.statusText}`);
+    console.error(`[luhive] Response body: ${errorBody}`);
     return {
       success: false,
       error: `Luhive API returned ${response.status}: ${response.statusText}`,
