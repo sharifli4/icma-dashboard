@@ -61,7 +61,7 @@ export default function CreateEventPage() {
               <path d="M12 8v8M8 12h8" />
             </svg>
           </div>
-          DISCOVERY.FEED
+          ICMA.IO
         </a>
         <div className="flex items-center gap-4">
           <span className="text-sm font-bold hidden sm:inline">ADMIN USER</span>
@@ -248,8 +248,8 @@ export default function CreateEventPage() {
       {/* Footer */}
       <footer className="border-t-2 border-[var(--border)] px-6 py-4 flex flex-col sm:flex-row items-center justify-between text-xs text-[var(--muted)] bg-white">
         <div className="flex items-center gap-4 mb-2 sm:mb-0">
-          <span className="font-bold text-[var(--accent)]">DISCOVERY.FEED</span>
-          <span>&copy;2024 Discovery_Feed_Network // System_Status: Online</span>
+          <span className="font-bold text-[var(--accent)]">ICMA.IO</span>
+          <span>&copy;2024 ICMA_Network // System_Status: Online</span>
         </div>
         <div className="flex items-center gap-4">
           <a href="#" className="hover:text-[var(--foreground)] transition-colors">
