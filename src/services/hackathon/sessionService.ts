@@ -5,6 +5,7 @@ import type {
   CreateHackathonSessionInput,
   CreateHackathonSessionResult,
   HackathonSessionData,
+  HackathonSessionStatus,
 } from "@/shared/hackathon/contracts";
 import { HACKATHON_SUBMIT_PATH_PREFIX } from "@/shared/hackathon/constants";
 import { toQrSvg } from "@/lib/qr";
@@ -18,7 +19,7 @@ function createToken(): string {
 function toSessionData(session: HackathonSubmissionSession): HackathonSessionData {
   return {
     id: session.id,
-    eventId: session.eventId,
+    eventName: session.eventName,
     token: session.token,
     submitPath: session.submitPath,
     startDate: session.startDate.toISOString(),
@@ -28,8 +29,8 @@ function toSessionData(session: HackathonSubmissionSession): HackathonSessionDat
 }
 
 export async function createSession(input: CreateHackathonSessionInput): Promise<CreateHackathonSessionResult> {
-  if (!nonEmptyString(input.eventId)) {
-    throw new HackathonServiceError("eventId is required", 400);
+  if (!nonEmptyString(input.eventName)) {
+    throw new HackathonServiceError("eventName is required", 400);
   }
 
   const startDate = parseDate(input.startDate);
@@ -48,20 +49,27 @@ export async function createSession(input: CreateHackathonSessionInput): Promise
   const orm = await getORM();
   const em = orm.em.fork();
   const session = em.create(HackathonSubmissionSession, {
-    eventId: input.eventId.trim(),
+    eventName: input.eventName.trim(),
     token,
     submitPath,
     startDate,
     endDate,
   });
 
-  await em.persistAndFlush(session);
+  await em.persist(session).flush();
   const qrCodeSvg = await toQrSvg(submitPath);
 
   return {
     ...toSessionData(session),
     qrCodeSvg,
   };
+}
+
+export async function listSessions(): Promise<HackathonSessionData[]> {
+  const orm = await getORM();
+  const em = orm.em.fork();
+  const sessions = await em.findAll(HackathonSubmissionSession, { orderBy: { createdAt: "DESC" } });
+  return sessions.map(toSessionData);
 }
 
 export async function getSession(idOrToken: string): Promise<HackathonSessionData> {
@@ -84,4 +92,28 @@ export async function getSession(idOrToken: string): Promise<HackathonSessionDat
   }
 
   return toSessionData(session);
+}
+
+export async function getSessionStatus(token: string): Promise<HackathonSessionStatus> {
+  if (!nonEmptyString(token)) {
+    throw new HackathonServiceError("Token is required", 400);
+  }
+
+  const orm = await getORM();
+  const em = orm.em.fork();
+
+  const session = await em.findOne(HackathonSubmissionSession, { token });
+  if (!session) {
+    throw new HackathonServiceError("Session not found", 404);
+  }
+
+  const now = new Date();
+  const isActive = now >= session.startDate && now <= session.endDate;
+
+  return {
+    eventName: session.eventName,
+    startDate: session.startDate.toISOString(),
+    endDate: session.endDate.toISOString(),
+    isActive,
+  };
 }
