@@ -306,19 +306,25 @@ export default function EventDetailPage() {
                   </div>
                   <p className="text-xs font-bold uppercase text-[var(--muted)]">
                     {hackathonSession ? (
-                      <>Deadline: {new Date(hackathonSession.endDate).toLocaleString()}</>
+                      new Date() < new Date(hackathonSession.startDate) ? (
+                        <>Opens: {new Date(hackathonSession.startDate).toLocaleString()}</>
+                      ) : new Date() > new Date(hackathonSession.endDate) ? (
+                        <>Submissions closed</>
+                      ) : (
+                        <>Deadline: {new Date(hackathonSession.endDate).toLocaleString()}</>
+                      )
                     ) : (
-                      <>Submissions are open</>
+                      <>No active submission session</>
                     )}
                   </p>
                 </div>
 {!isOrganizer && (
-                  hackathonSession ? (
+                  hackathonSession && new Date() >= new Date(hackathonSession.startDate) && new Date() <= new Date(hackathonSession.endDate) ? (
                     <a href={hackathonSession.submitPath} className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase hover:bg-gray-100 transition-colors flex-shrink-0">
                       Submit Project
                     </a>
                   ) : (
-                    <span className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase text-[var(--muted)]">
+                    <span className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase text-[var(--muted)] cursor-not-allowed">
                       Submit Project
                     </span>
                   )
