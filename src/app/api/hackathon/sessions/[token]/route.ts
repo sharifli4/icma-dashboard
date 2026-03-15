@@ -6,7 +6,7 @@ import { verifyHackathonAdmin } from "@/lib/hackathon/admin";
 export const runtime = "nodejs";
 
 type Params = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ token: string }>;
 };
 
 export async function GET(request: NextRequest, { params }: Params) {
@@ -15,8 +15,8 @@ export async function GET(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: admin.message }, { status: admin.status });
   }
 
-  const { id } = await params;
-  const sessionId = Number(id);
+  const { token } = await params;
+  const sessionId = Number(token);
   if (!Number.isInteger(sessionId) || sessionId < 1) {
     return NextResponse.json({ error: "Invalid session id" }, { status: 400 });
   }
