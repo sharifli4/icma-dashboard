@@ -55,7 +55,7 @@ export async function createSession(input: CreateHackathonSessionInput): Promise
     endDate,
   });
 
-  await em.persistAndFlush(session);
+  await em.persist(session).flush();
   const qrCodeSvg = await toQrSvg(submitPath);
 
   return {

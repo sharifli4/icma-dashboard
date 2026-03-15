@@ -78,7 +78,7 @@ export async function createSubmissionByToken(
     githubUrl: input.githubUrl,
   });
 
-  await em.persistAndFlush(submission);
+  await em.persist(submission).flush();
 
   return toSubmissionData(submission, session.id);
 }
