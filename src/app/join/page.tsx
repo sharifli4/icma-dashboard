@@ -27,6 +27,8 @@ export default function JoinPage() {
   const router = useRouter();
   const [agreed, setAgreed] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoUrl, setLogoUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,18 +39,31 @@ export default function JoinPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const uploadFile = async (file: File) => {
+    setLogoFile(file);
+    setUploading(true);
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: form });
+    const json = await res.json();
+    setUploading(false);
+    if (res.ok) {
+      setLogoUrl(json.data.publicUrl);
+    }
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragActive(false);
     const file = e.dataTransfer.files?.[0];
     if (file && (file.type === "image/png" || file.type === "image/svg+xml")) {
-      if (file.size <= 2 * 1024 * 1024) setLogoFile(file);
+      if (file.size <= 2 * 1024 * 1024) uploadFile(file);
     }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setLogoFile(file);
+    if (file) uploadFile(file);
   };
 
   const handleSubmit = async () => {
@@ -283,7 +298,11 @@ export default function JoinPage() {
                   }`}
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  {logoFile ? (
+                  {logoUrl ? (
+                    <img src={logoUrl} alt="Logo preview" className="max-h-28 object-contain" />
+                  ) : uploading ? (
+                    <span className="text-xs font-bold">Uploading...</span>
+                  ) : logoFile ? (
                     <span className="text-xs font-bold text-center px-2 break-all">
                       {logoFile.name}
                     </span>
