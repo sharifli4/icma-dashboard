@@ -244,15 +244,29 @@ export default function Home() {
             <h3 className="text-xs font-bold uppercase tracking-wider mb-3 text-[var(--muted)]">
               Admin_Tools
             </h3>
-            <a
-              href="/hackathon/admin"
-              className="flex items-center gap-2 px-3 py-2 text-sm font-bold border-2 border-[var(--border)] hover:bg-[var(--accent)] transition-colors"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-              CREATE_HACKATHON
-            </a>
+            <div className="flex flex-col gap-2">
+              <a
+                href="/hackathon/admin"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-bold border-2 border-[var(--border)] hover:bg-[var(--accent)] transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                CREATE_HACKATHON
+              </a>
+              <a
+                href="/hackathon/dashboard"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-bold border-2 border-[var(--border)] hover:bg-[var(--accent)] transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                </svg>
+                VIEW_SUBMISSIONS
+              </a>
+            </div>
           </div>
         </aside>
 
