@@ -347,9 +347,13 @@ function DashboardContent() {
           ICMA.IO
         </a>
         <div className="flex items-center gap-4">
-          <span className="text-sm font-bold hidden sm:inline">{session.user.name}</span>
-          <div className="w-9 h-9 border-2 border-[var(--border)] rounded-full flex items-center justify-center">
-            <UserIcon />
+          <span className="text-sm font-bold hidden sm:inline">{communityName || session.user.name}</span>
+          <div className="w-9 h-9 border-2 border-[var(--border)] rounded-full flex items-center justify-center overflow-hidden">
+            {logoUrl ? (
+              <img src={logoUrl} alt={communityName} className="w-full h-full object-cover" />
+            ) : (
+              <UserIcon />
+            )}
           </div>
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
