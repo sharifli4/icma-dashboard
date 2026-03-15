@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getORM } from "@/db";
-import { CommunityEvent } from "@/db/entities/Event";
-import { EventVote } from "@/db/entities/EventVote";
+import type { CommunityEvent } from "@/db/entities/Event";
+import type { EventVote } from "@/db/entities/EventVote";
 
 export const runtime = "nodejs";
 
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   const orm = await getORM();
   const em = orm.em.fork();
 
-  const vote = await em.findOne(EventVote, { event: { id: eventId }, ipAddress: ip });
+  const vote = await em.findOne<EventVote>("EventVote", { event: { id: eventId }, ipAddress: ip });
 
   return NextResponse.json({ hasVoted: !!vote });
 }
@@ -46,22 +46,22 @@ export async function POST(request: NextRequest, { params }: Params) {
   const orm = await getORM();
   const em = orm.em.fork();
 
-  const event = await em.findOne(CommunityEvent, { id: eventId });
+  const event = await em.findOne<CommunityEvent>("CommunityEvent", { id: eventId });
   if (!event) {
     return NextResponse.json({ error: "Event not found" }, { status: 404 });
   }
 
-  const existing = await em.findOne(EventVote, { event: { id: eventId }, ipAddress: ip });
+  const existing = await em.findOne<EventVote>("EventVote", { event: { id: eventId }, ipAddress: ip });
 
   if (existing) {
     em.remove(existing);
-    event.upvotes = Math.max(0, event.upvotes - 1);
+    event.upvotes = Math.max(0, (event.upvotes ?? 0) - 1);
     await em.flush();
     return NextResponse.json({ hasVoted: false, upvotes: event.upvotes });
   }
 
-  const vote = em.create(EventVote, { event, ipAddress: ip });
-  event.upvotes += 1;
+  const vote = em.create<EventVote>("EventVote", { event, ipAddress: ip });
+  event.upvotes = (event.upvotes ?? 0) + 1;
   await em.persistAndFlush(vote);
 
   return NextResponse.json({ hasVoted: true, upvotes: event.upvotes });

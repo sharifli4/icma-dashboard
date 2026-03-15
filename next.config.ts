@@ -8,14 +8,8 @@ const nextConfig: NextConfig = {
     "@mikro-orm/cli",
   ],
   turbopack: {},
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.optimization = {
-        ...config.optimization,
-        minimize: false,
-      };
-    }
-    return config;
+  experimental: {
+    serverMinification: false,
   },
 };
 
