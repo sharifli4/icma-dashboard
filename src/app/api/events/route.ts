@@ -27,17 +27,26 @@ function formatEvent(event: CommunityEvent) {
 
 // GET all events (public) or user's events (?mine=true)
 export async function GET(request: NextRequest) {
-  const orm = await getORM();
-  const em = orm.em.fork();
-  const mine = request.nextUrl.searchParams.get("mine");
+  try {
+    const orm = await getORM();
+    const em = orm.em.fork();
+    const mine = request.nextUrl.searchParams.get("mine");
 
-  if (mine === "true") {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (mine === "true") {
+      const session = await getServerSession(authOptions);
+      if (!session) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      const events = await em.find(CommunityEvent, { user: { id: Number(session.user.id) } }, { orderBy: { createdAt: "DESC" } });
+      return NextResponse.json({ data: events.map(formatEvent) });
     }
     const events = await em.find<CommunityEvent>("CommunityEvent", { user: { id: Number(session.user.id) } }, { orderBy: { createdAt: "DESC" } });
     return NextResponse.json({ data: events.map(formatEvent) });
+  } catch (error) {
+    console.error("[GET /api/events] Error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    const stack = error instanceof Error ? error.stack : undefined;
+    return NextResponse.json({ error: message, stack }, { status: 500 });
   }
 
   const events = await em.find<CommunityEvent>("CommunityEvent", { status: "LIVE" }, { orderBy: { createdAt: "DESC" } });

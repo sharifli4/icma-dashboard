@@ -81,15 +81,45 @@ export default function Home() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [events, setEvents] = useState<EventData[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [votedIds, setVotedIds] = useState<Set<number>>(new Set());
+  const [votingId, setVotingId] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/events")
       .then((r) => r.json())
       .then((json) => {
-        if (json.data) setEvents(json.data);
+        if (json.data) {
+          setEvents(json.data);
+          const ids = json.data.map((e: EventData) => e.id).join(",");
+          if (ids) {
+            fetch(`/api/events/voted?ids=${ids}`)
+              .then((r) => r.json())
+              .then((v) => setVotedIds(new Set(v.votedIds)));
+          }
+        }
         setLoaded(true);
       });
   }, []);
+
+  const handleVote = async (eventId: number) => {
+    if (votingId !== null) return;
+    setVotingId(eventId);
+    try {
+      const res = await fetch(`/api/events/${eventId}/vote`, { method: "POST" });
+      const data = await res.json();
+      setEvents((prev) =>
+        prev.map((e) => (e.id === eventId ? { ...e, upvotes: data.upvotes } : e))
+      );
+      setVotedIds((prev) => {
+        const next = new Set(prev);
+        if (data.hasVoted) next.add(eventId);
+        else next.delete(eventId);
+        return next;
+      });
+    } finally {
+      setVotingId(null);
+    }
+  };
 
   const toggleCategory = (cat: string) => {
     setSelectedCategories((prev) =>
@@ -328,10 +358,18 @@ export default function Home() {
                         </div>
                       </div>
                       <div className="border-t-2 border-[var(--border)] pt-4 flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm font-bold">
+                        <button
+                          onClick={() => handleVote(featured.id)}
+                          disabled={votingId !== null}
+                          className={`flex items-center gap-2 text-sm font-bold transition-colors ${
+                            votedIds.has(featured.id)
+                              ? "text-[var(--accent)] bg-[var(--accent)]/20 border-2 border-[var(--accent)] px-3 py-1"
+                              : "hover:text-[var(--accent)] border-2 border-transparent px-3 py-1 hover:border-[var(--border)]"
+                          }`}
+                        >
                           <ThumbsUpIcon />
                           {featured.upvotes}
-                        </div>
+                        </button>
                         <a href={`/event/${featured.id}`} className="bg-[var(--accent)] border-2 border-[var(--border)] px-5 py-2 text-sm font-bold hover:bg-[var(--accent-hover)] transition-colors">
                           VIEW_DETAILS
                         </a>
@@ -385,10 +423,18 @@ export default function Home() {
                             )}
                           </div>
                           <div className="border-t-2 border-[var(--border)] pt-3 flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-sm font-bold">
+                            <button
+                              onClick={() => handleVote(event.id)}
+                              disabled={votingId !== null}
+                              className={`flex items-center gap-2 text-sm font-bold transition-colors ${
+                                votedIds.has(event.id)
+                                  ? "text-[var(--accent)] bg-[var(--accent)]/20 border-2 border-[var(--accent)] px-3 py-1"
+                                  : "hover:text-[var(--accent)] border-2 border-transparent px-3 py-1 hover:border-[var(--border)]"
+                              }`}
+                            >
                               <ThumbsUpIcon />
                               {event.upvotes}
-                            </div>
+                            </button>
                             <a href={`/event/${event.id}`} className="border-2 border-[var(--border)] px-3 py-1.5 text-xs font-bold hover:bg-gray-100 transition-colors">
                               VIEW_DETAILS
                             </a>
