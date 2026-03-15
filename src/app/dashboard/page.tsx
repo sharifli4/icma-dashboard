@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { redirect, useSearchParams } from "next/navigation";
 
 interface EventItem {
   id: number;
@@ -99,7 +99,17 @@ interface ProfileData {
 }
 
 export default function DashboardPage() {
+  return (
+    <Suspense>
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+function DashboardContent() {
   const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
+  const [showWelcome, setShowWelcome] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -164,6 +174,13 @@ export default function DashboardPage() {
       loadEvents();
     }
   }, [session, loadProfile, loadEvents]);
+
+  useEffect(() => {
+    if (searchParams.get("welcome") === "true") {
+      setShowWelcome(true);
+      window.history.replaceState({}, "", "/dashboard");
+    }
+  }, [searchParams]);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -263,15 +280,70 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Welcome Modal */}
+      {showWelcome && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+          <div className="bg-white border-2 border-[var(--border)] max-w-md w-full">
+            <div className="border-b-2 border-[var(--border)] px-6 py-4 flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
+                System Notification
+              </span>
+              <button
+                onClick={() => setShowWelcome(false)}
+                className="text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-6 py-6">
+              <div className="w-12 h-12 bg-[var(--accent)] flex items-center justify-center mb-4">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-black uppercase tracking-tight mb-2">
+                Welcome to ICMA
+              </h2>
+              <p className="text-sm text-[var(--muted)] leading-relaxed mb-4">
+                Your community node has been successfully registered on the ICMA network.
+                You now have access to create events, manage members, and connect with the
+                global community.
+              </p>
+              <div className="border-2 border-gray-200 p-4 mb-5">
+                <p className="text-xs font-bold uppercase tracking-wider mb-2">Quick Start</p>
+                <ul className="text-sm text-[var(--muted)] space-y-1.5">
+                  <li className="flex items-start gap-2">
+                    <span className="text-[var(--accent)] font-bold mt-0.5">01.</span>
+                    Set up your community profile on the left panel
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[var(--accent)] font-bold mt-0.5">02.</span>
+                    Create your first event to engage your members
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[var(--accent)] font-bold mt-0.5">03.</span>
+                    Share your event page link to gather RSVPs
+                  </li>
+                </ul>
+              </div>
+              <button
+                onClick={() => setShowWelcome(false)}
+                className="w-full bg-[var(--accent)] border-2 border-[var(--border)] py-3 text-sm font-black uppercase hover:bg-[var(--accent-hover)] transition-colors"
+              >
+                Get Started
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Navbar */}
       <header className="border-b-2 border-[var(--border)] px-6 py-3 flex items-center justify-between bg-white sticky top-0 z-50">
         <a href="/" className="flex items-center gap-2 font-bold text-lg tracking-tight">
-          <div className="w-8 h-8 rounded-full border-2 border-[var(--border)] flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 8v8M8 12h8" />
-            </svg>
-          </div>
+          <img src="/icma_logo.svg" alt="ICMA.IO" className="w-7 h-7" />
           ICMA.IO
         </a>
         <div className="flex items-center gap-4">

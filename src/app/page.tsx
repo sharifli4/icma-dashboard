@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSession, signOut } from "next-auth/react";
 
 const CATEGORIES = ["AI", "Cybersecurity", "Startups", "Product", "Web3", "Data"];
-const TIMELINE_OPTIONS = ["Today", "This Week", "This Month", "Custom Date"];
+const TIMELINE_OPTIONS = ["All", "Today", "This Week", "This Month", "Custom Date"];
 
 interface EventData {
   id: number;
@@ -16,6 +16,7 @@ interface EventData {
   category: string;
   location: string | null;
   upvotes: number;
+  hackathonEnabled: boolean;
 }
 
 interface CommunityData {
@@ -113,8 +114,8 @@ function ExternalLinkIcon() {
 
 export default function Home() {
   const { data: session } = useSession();
-  const [activeTimeline, setActiveTimeline] = useState("Today");
-  const [activeType, setActiveType] = useState("Event");
+  const [activeTimeline, setActiveTimeline] = useState("All");
+  const [activeType, setActiveType] = useState("All");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [events, setEvents] = useState<EventData[]>([]);
   const [communities, setCommunities] = useState<CommunityData[]>([]);
@@ -123,7 +124,10 @@ export default function Home() {
   const [votedIds, setVotedIds] = useState<Set<number>>(new Set());
   const [votingId, setVotingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [customDateFrom, setCustomDateFrom] = useState("");
+  const [customDateTo, setCustomDateTo] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/events")
@@ -178,32 +182,124 @@ export default function Home() {
     );
   };
 
-  const filteredEvents = events.filter((e) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      e.title.toLowerCase().includes(q) ||
-      e.description.toLowerCase().includes(q) ||
-      e.category.toLowerCase().includes(q) ||
-      e.eventType.toLowerCase().includes(q) ||
-      (e.location && e.location.toLowerCase().includes(q))
-    );
-  });
+  const clearFilters = () => {
+    setActiveTimeline("All");
+    setActiveType("All");
+    setSelectedCategories([]);
+    setSearchQuery("");
+    setCustomDateFrom("");
+    setCustomDateTo("");
+  };
 
-  const featured = filteredEvents[0] || null;
-  const upcoming = filteredEvents.slice(1);
+  const filteredEvents = useMemo(() => {
+    return events.filter((event) => {
+      // Search filter
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        if (
+          !event.title.toLowerCase().includes(q) &&
+          !event.description.toLowerCase().includes(q) &&
+          !event.category.toLowerCase().includes(q) &&
+          !event.eventType.toLowerCase().includes(q) &&
+          !(event.location || "").toLowerCase().includes(q)
+        ) {
+          return false;
+        }
+      }
+
+      // Type filter
+      if (activeType !== "All") {
+        if (activeType === "Hackathon" && !event.hackathonEnabled) return false;
+        if (activeType === "Event" && event.hackathonEnabled) return false;
+      }
+
+      // Category filter
+      if (selectedCategories.length > 0) {
+        if (!selectedCategories.some((cat) => event.category.toLowerCase() === cat.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Timeline filter
+      const eventDate = new Date(event.dateTime);
+      const now = new Date();
+
+      if (activeTimeline === "Today") {
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const endOfDay = new Date(startOfDay);
+        endOfDay.setDate(endOfDay.getDate() + 1);
+        if (eventDate < startOfDay || eventDate >= endOfDay) return false;
+      } else if (activeTimeline === "This Week") {
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(endOfWeek.getDate() + 7);
+        if (eventDate < startOfWeek || eventDate >= endOfWeek) return false;
+      } else if (activeTimeline === "This Month") {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        if (eventDate < startOfMonth || eventDate >= endOfMonth) return false;
+      } else if (activeTimeline === "Custom Date") {
+        if (customDateFrom) {
+          const [y, m, d] = customDateFrom.split("-").map(Number);
+          const start = new Date(y, m - 1, d);
+          if (eventDate < start) return false;
+        }
+        if (customDateTo) {
+          const [y, m, d] = customDateTo.split("-").map(Number);
+          const end = new Date(y, m - 1, d + 1);
+          if (eventDate >= end) return false;
+        }
+      }
+
+      return true;
+    });
+  }, [events, searchQuery, activeType, selectedCategories, activeTimeline, customDateFrom, customDateTo]);
+
+  const { featured, upcoming, pastEvents } = useMemo(() => {
+    if (filteredEvents.length === 0) return { featured: null, upcoming: [], pastEvents: [] };
+
+    const now = Date.now();
+    const DAY_MS = 86400000;
+
+    const trendCandidates = filteredEvents.filter(
+      (event) => new Date(event.dateTime).getTime() >= now
+    );
+
+    const scored = trendCandidates.map((event) => {
+      const daysAway = (new Date(event.dateTime).getTime() - now) / DAY_MS;
+      const proximityScore = Math.max(0, 1 - daysAway / 30);
+      const score = event.upvotes + proximityScore * 10;
+      return { event, score };
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+
+    const featuredEvent = scored.length > 0 ? scored[0].event : null;
+    const featuredId = featuredEvent?.id;
+
+    const upcoming = filteredEvents
+      .filter((e) => e.id !== featuredId && new Date(e.dateTime).getTime() >= now)
+      .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+
+    const pastEvents = filteredEvents
+      .filter((e) => new Date(e.dateTime).getTime() < now)
+      .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
+
+    return {
+      featured: featuredEvent,
+      upcoming,
+      pastEvents,
+    };
+  }, [filteredEvents]);
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navbar */}
       <header className="border-b-2 border-[var(--border)] px-6 py-3 flex items-center justify-between sticky top-0 bg-white z-50">
         <div className="flex items-center gap-2 font-bold text-lg tracking-tight">
-          <div className="w-8 h-8 rounded-full border-2 border-[var(--border)] flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 8v8M8 12h8" />
-            </svg>
-          </div>
+          <img src="/icma_logo.svg" alt="ICMA.IO" className="w-7 h-7" />
           ICMA.IO
         </div>
 
@@ -274,9 +370,16 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Mobile search toggle */}
+          <button
+            onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+            className="sm:hidden w-9 h-9 border-2 border-[var(--border)] flex items-center justify-center hover:bg-gray-100 transition-colors"
+          >
+            <SearchIcon />
+          </button>
           {session ? (
             <>
-              <a href="/dashboard" className="text-sm font-bold hover:underline">
+              <a href="/dashboard" className="text-sm font-bold hover:underline hidden sm:inline">
                 {session.user.name}
               </a>
               <button
@@ -298,6 +401,78 @@ export default function Home() {
           )}
         </div>
       </header>
+
+      {/* Mobile Search Bar */}
+      {mobileSearchOpen && (
+        <div className="sm:hidden border-b-2 border-[var(--border)] px-4 py-3 bg-white sticky top-[57px] z-40">
+          <div className="flex items-center border-2 border-[var(--border)] rounded px-3 py-1.5 gap-2 relative">
+            <SearchIcon />
+            <input
+              type="text"
+              placeholder="Search_Events..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+              autoFocus
+              className="bg-transparent outline-none text-sm font-mono w-full"
+            />
+            {searchQuery.trim() && (
+              <button onClick={() => setSearchQuery("")} className="text-[var(--muted)] hover:text-[var(--foreground)] flex-shrink-0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              </button>
+            )}
+
+            {/* Mobile Search Dropdown */}
+            {searchFocused && searchQuery.trim() && (
+              <div className="absolute top-full left-0 right-0 mt-1 border-2 border-[var(--border)] bg-white shadow-[4px_4px_0px_var(--border)] max-h-72 overflow-y-auto z-[60]">
+                {filteredEvents.length === 0 ? (
+                  <div className="px-4 py-6 text-center text-xs font-bold text-[var(--muted)] uppercase">
+                    No results for &ldquo;{searchQuery}&rdquo;
+                  </div>
+                ) : (
+                  <>
+                    <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)] border-b border-gray-200">
+                      {filteredEvents.length} {filteredEvents.length === 1 ? "result" : "results"}
+                    </div>
+                    {filteredEvents.slice(0, 6).map((e) => (
+                      <a
+                        key={e.id}
+                        href={`/event/${e.id}`}
+                        className="flex items-start gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="w-10 h-10 bg-gray-200 rounded flex-shrink-0 overflow-hidden">
+                          {e.bannerUrl ? (
+                            <img src={e.bannerUrl} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold truncate">{e.title}</div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] font-bold px-1.5 py-0 border border-[var(--border)] bg-gray-50">{e.eventType.toUpperCase()}</span>
+                            <span className="text-[10px] text-[var(--muted)]">{e.category}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-[var(--muted)] flex-shrink-0">
+                          <ThumbsUpIcon />
+                          {e.upvotes}
+                        </div>
+                      </a>
+                    ))}
+                    {filteredEvents.length > 6 && (
+                      <div className="px-3 py-2 text-[10px] font-bold text-center text-[var(--muted)] border-t border-gray-200">
+                        +{filteredEvents.length - 6} more results
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-1">
         {/* Sidebar */}
@@ -322,6 +497,26 @@ export default function Home() {
                   {option.toUpperCase()}
                 </button>
               ))}
+              {activeTimeline === "Custom Date" && (
+                <div className="mt-1 flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold uppercase text-[var(--muted)]">From</label>
+                  <input
+                    type="date"
+                    value={customDateFrom}
+                    max={customDateTo || undefined}
+                    onChange={(e) => setCustomDateFrom(e.target.value)}
+                    className="px-3 py-2 text-sm font-mono border-2 border-[var(--border)] outline-none"
+                  />
+                  <label className="text-[10px] font-bold uppercase text-[var(--muted)]">To</label>
+                  <input
+                    type="date"
+                    value={customDateTo}
+                    min={customDateFrom || undefined}
+                    onChange={(e) => setCustomDateTo(e.target.value)}
+                    className="px-3 py-2 text-sm font-mono border-2 border-[var(--border)] outline-none"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -369,9 +564,12 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Apply Filters */}
-          <button className="w-full bg-[var(--border)] text-white py-2.5 text-sm font-bold hover:bg-black transition-colors">
-            APPLY_FILTERS
+          {/* Clear Filters */}
+          <button
+            onClick={clearFilters}
+            className="w-full bg-[var(--border)] text-white py-2.5 text-sm font-bold hover:bg-black transition-colors"
+          >
+            CLEAR_FILTERS
           </button>
 
           {/* Admin Section */}
@@ -577,7 +775,7 @@ export default function Home() {
 
               {/* Upcoming Events */}
               {upcoming.length > 0 && (
-                <div>
+                <div className="mb-10">
                   <h2 className="text-2xl font-bold uppercase tracking-tight mb-5">
                     Upcoming_Events
                   </h2>
@@ -631,6 +829,68 @@ export default function Home() {
                               <ThumbsUpIcon />
                               {event.upvotes}
                             </button>
+                            <a href={`/event/${event.id}`} className="border-2 border-[var(--border)] px-3 py-1.5 text-xs font-bold hover:bg-gray-100 transition-colors">
+                              VIEW_DETAILS
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Past Events */}
+              {pastEvents.length > 0 && (
+                <div>
+                  <h2 className="text-2xl font-bold uppercase tracking-tight mb-5">
+                    Past_Events
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                    {pastEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        className="border-2 border-[var(--border)] flex flex-col overflow-hidden opacity-75 hover:opacity-100 hover:shadow-[4px_4px_0px_var(--border)] transition-all"
+                      >
+                        <div className="relative bg-gray-200 h-44 overflow-hidden">
+                          <div className="absolute top-3 right-3 z-10 flex gap-1">
+                            <span className="px-2 py-0.5 text-xs font-bold border-2 border-[var(--border)] bg-gray-300">
+                              ENDED
+                            </span>
+                            <span className="px-2 py-0.5 text-xs font-bold border-2 border-[var(--border)] bg-[var(--accent)]">
+                              {event.eventType.toUpperCase()}
+                            </span>
+                          </div>
+                          {event.bannerUrl ? (
+                            <img src={event.bannerUrl} alt={event.title} className="w-full h-full object-cover grayscale-[30%]" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400" />
+                          )}
+                        </div>
+                        <div className="p-4 flex flex-col flex-1">
+                          <h3 className="text-base font-bold uppercase mb-1.5">
+                            {event.title}
+                          </h3>
+                          <p className="text-xs text-[var(--muted)] leading-relaxed mb-3 flex-1 line-clamp-2">
+                            {event.description || "No description provided."}
+                          </p>
+                          <div className="flex items-center gap-3 text-xs text-[var(--muted)] mb-3">
+                            <span className="flex items-center gap-1">
+                              <CalendarIcon />
+                              {new Date(event.dateTime).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            </span>
+                            {event.location && (
+                              <span className="flex items-center gap-1">
+                                <LocationIcon />
+                                {event.location}
+                              </span>
+                            )}
+                          </div>
+                          <div className="border-t-2 border-[var(--border)] pt-3 flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-sm font-bold text-[var(--muted)]">
+                              <ThumbsUpIcon />
+                              {event.upvotes}
+                            </div>
                             <a href={`/event/${event.id}`} className="border-2 border-[var(--border)] px-3 py-1.5 text-xs font-bold hover:bg-gray-100 transition-colors">
                               VIEW_DETAILS
                             </a>

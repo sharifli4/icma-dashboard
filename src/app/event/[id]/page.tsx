@@ -146,8 +146,9 @@ export default function EventDetailPage() {
         if (json?.data) {
           setEvent(json.data);
           fetch(`/api/events/${json.data.id}/vote`)
-            .then((r) => r.json())
-            .then((v) => setHasVoted(v.hasVoted));
+            .then((r) => r.ok ? r.json() : null)
+            .then((v) => { if (v) setHasVoted(v.hasVoted); })
+            .catch(() => {});
         }
         setLoading(false);
       });
@@ -183,9 +184,12 @@ export default function EventDetailPage() {
     setVoting(true);
     try {
       const res = await fetch(`/api/events/${event.id}/vote`, { method: "POST" });
+      if (!res.ok) return;
       const data = await res.json();
       setEvent((prev) => prev ? { ...prev, upvotes: data.upvotes } : prev);
       setHasVoted(data.hasVoted);
+    } catch {
+      // Network error — silently ignore
     } finally {
       setVoting(false);
     }
@@ -423,11 +427,7 @@ export default function EventDetailPage() {
       {/* Navbar — always visible */}
       <header className="border-b-2 border-[var(--border)] px-6 py-3 flex items-center justify-between bg-white sticky top-0 z-50">
         <a href="/" className="flex items-center gap-2 font-bold text-lg tracking-tight">
-          <div className="w-8 h-8 rounded border-2 border-[var(--border)] flex items-center justify-center bg-[var(--accent)]">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-            </svg>
-          </div>
+          <img src="/icma_logo.svg" alt="ICMA.IO" className="w-7 h-7" />
           ICMA.IO
         </a>
         <div className="flex items-center gap-3">
