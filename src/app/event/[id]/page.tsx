@@ -78,6 +78,8 @@ export default function EventDetailPage() {
   const [event, setEvent] = useState<EventDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [voting, setVoting] = useState(false);
 
   useEffect(() => {
     fetch(`/api/events/${params.id}`)
@@ -86,10 +88,28 @@ export default function EventDetailPage() {
         return r.json();
       })
       .then((json) => {
-        if (json?.data) setEvent(json.data);
+        if (json?.data) {
+          setEvent(json.data);
+          fetch(`/api/events/${json.data.id}/vote`)
+            .then((r) => r.json())
+            .then((v) => setHasVoted(v.hasVoted));
+        }
         setLoading(false);
       });
   }, [params.id]);
+
+  const handleVote = async () => {
+    if (!event || voting) return;
+    setVoting(true);
+    try {
+      const res = await fetch(`/api/events/${event.id}/vote`, { method: "POST" });
+      const data = await res.json();
+      setEvent((prev) => prev ? { ...prev, upvotes: data.upvotes } : prev);
+      setHasVoted(data.hasVoted);
+    } finally {
+      setVoting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -220,10 +240,18 @@ export default function EventDetailPage() {
               )}
 
               {/* Upvotes */}
-              <div className="border-2 border-[var(--border)] px-6 py-4 flex items-center justify-center gap-2">
+              <button
+                onClick={handleVote}
+                disabled={voting}
+                className={`border-2 px-6 py-4 flex items-center justify-center gap-2 transition-colors cursor-pointer ${
+                  hasVoted
+                    ? "border-[var(--accent)] bg-[var(--accent)]/20 text-[var(--accent)]"
+                    : "border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                }`}
+              >
                 <ThumbsUpIcon />
-                <span className="text-sm font-bold">{event.upvotes} Upvotes</span>
-              </div>
+                <span className="text-sm font-bold">{event.upvotes} {hasVoted ? "Upvoted" : "Upvote"}</span>
+              </button>
 
               {/* Event Info */}
               <div className="border-2 border-[var(--border)] p-5">

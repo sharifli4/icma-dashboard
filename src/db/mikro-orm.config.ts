@@ -5,10 +5,11 @@ import { HackathonSubmissionSessionSchema } from "./entities/HackathonSubmission
 import { HackathonProjectSubmissionSchema } from "./entities/HackathonProjectSubmission";
 import { CommunityProfileSchema } from "./entities/CommunityProfile";
 import { CommunityEventSchema } from "./entities/Event";
+import { EventVoteSchema } from "./entities/EventVote";
 import { migrations } from "./migrations";
 
 export default defineConfig({
-  entities: [UserSchema, HackathonSubmissionSessionSchema, HackathonProjectSubmissionSchema, CommunityProfileSchema, CommunityEventSchema],
+  entities: [UserSchema, HackathonSubmissionSessionSchema, HackathonProjectSubmissionSchema, CommunityProfileSchema, CommunityEventSchema, EventVoteSchema],
   clientUrl: process.env.DATABASE_URL,
   driverOptions: {
     connection: {
