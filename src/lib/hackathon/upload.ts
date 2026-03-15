@@ -1,7 +1,8 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto";
+import { HACKATHON_ALLOWED_VIDEO_TYPES, HACKATHON_DEFAULT_VIDEO_MAX_BYTES } from "@/shared/hackathon/constants";
 
-const allowedVideoTypes = new Set(["video/mp4", "video/webm", "video/quicktime"]);
+const allowedVideoTypes = new Set<string>(HACKATHON_ALLOWED_VIDEO_TYPES);
 
 function getRequiredEnv(name: string): string {
   const value = process.env[name];
@@ -16,7 +17,7 @@ function sanitizeFileName(fileName: string): string {
 }
 
 export function validateVideoFile(file: File): { ok: true } | { ok: false; message: string; status: number } {
-  const maxBytes = Number(process.env.HACKATHON_DEMO_VIDEO_MAX_BYTES ?? "104857600");
+  const maxBytes = Number(process.env.HACKATHON_DEMO_VIDEO_MAX_BYTES ?? HACKATHON_DEFAULT_VIDEO_MAX_BYTES);
 
   if (!allowedVideoTypes.has(file.type)) {
     return { ok: false, message: "Unsupported demo video type", status: 400 };
