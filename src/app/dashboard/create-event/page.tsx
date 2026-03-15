@@ -125,10 +125,6 @@ export default function CreateEventPage() {
   };
 
   const handlePublish = async () => {
-    if (!title.trim() || !dateTime || !eventType || !category) {
-      setError("Please fill in all required fields");
-      return;
-    }
     if (isHackathonType && enableSubmissions && !submissionDeadline) {
       setError("Please set a submission deadline for the hackathon");
       return;
