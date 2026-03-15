@@ -56,6 +56,45 @@ function CodeIcon() {
   );
 }
 
+function CopyIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="9" y="9" width="13" height="13" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  );
+}
+
+function QrCodeIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="3" width="7" height="7" />
+      <rect x="14" y="3" width="7" height="7" />
+      <rect x="3" y="14" width="7" height="7" />
+      <rect x="14" y="14" width="3" height="3" />
+      <rect x="18" y="14" width="3" height="3" />
+      <rect x="14" y="18" width="3" height="3" />
+      <rect x="18" y="18" width="3" height="3" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M18 6L6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
 interface EventDetail {
   id: number;
   title: string;
@@ -72,6 +111,17 @@ interface EventDetail {
   organizer: string;
 }
 
+interface HackathonSession {
+  id: number;
+  eventName: string;
+  token: string;
+  submitPath: string;
+  startDate: string;
+  endDate: string;
+  qrCodeSvg: string;
+  submissionCount: number;
+}
+
 export default function EventDetailPage() {
   const { data: session } = useSession();
   const params = useParams();
@@ -80,6 +130,11 @@ export default function EventDetailPage() {
   const [notFound, setNotFound] = useState(false);
   const [hasVoted, setHasVoted] = useState(false);
   const [voting, setVoting] = useState(false);
+  const [hackathonSession, setHackathonSession] = useState<HackathonSession | null>(null);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const isOrganizer = session && event?.organizer === session.user?.name;
 
   useEffect(() => {
     fetch(`/api/events/${params.id}`)
@@ -97,6 +152,31 @@ export default function EventDetailPage() {
         setLoading(false);
       });
   }, [params.id]);
+
+  useEffect(() => {
+    if (session && event?.hackathonEnabled) {
+      fetch(`/api/events/${event.id}/hackathon-session`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((json) => {
+          if (json?.data) {
+            setHackathonSession(json.data);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [session, event]);
+
+  const getSubmitUrl = () => {
+    if (!hackathonSession) return "";
+    return `${window.location.origin}${hackathonSession.submitPath}`;
+  };
+
+  const copyToClipboard = async () => {
+    const url = getSubmitUrl();
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleVote = async () => {
     if (!event || voting) return;
@@ -204,22 +284,66 @@ export default function EventDetailPage() {
 
               {/* Hackathon Banner */}
               {event.hackathonEnabled && (
-                <div className="border-2 border-[var(--border)] bg-[#f5f5f5] p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <CodeIcon />
-                      <h3 className="text-base font-black uppercase">Hackathon Mode Active</h3>
+                <div className="border-2 border-[var(--border)] bg-[#f5f5f5] p-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <CodeIcon />
+                        <h3 className="text-base font-black uppercase">Hackathon Mode Active</h3>
+                      </div>
+                      <p className="text-xs font-bold uppercase text-[var(--muted)]">
+                        {hackathonSession ? (
+                          <>Deadline: {new Date(hackathonSession.endDate).toLocaleString()}</>
+                        ) : (
+                          <>Submissions are open</>
+                        )}
+                      </p>
                     </div>
-                    <p className="text-xs font-bold uppercase text-[var(--muted)]">
-                      Submissions are open
-                    </p>
+                    {hackathonSession ? (
+                      <a
+                        href={hackathonSession.submitPath}
+                        className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase hover:bg-gray-100 transition-colors flex-shrink-0"
+                      >
+                        Submit Project
+                      </a>
+                    ) : (
+                      <span className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase text-[var(--muted)]">
+                        Submit Project
+                      </span>
+                    )}
                   </div>
-                  <a
-                    href="#"
-                    className="border-2 border-[var(--border)] bg-white px-6 py-3 text-sm font-black uppercase hover:bg-gray-100 transition-colors flex-shrink-0"
-                  >
-                    Submit Project
-                  </a>
+
+                  {/* Organizer Controls */}
+                  {isOrganizer && hackathonSession && (
+                    <div className="mt-6 pt-6 border-t-2 border-[var(--border)]">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
+                          Organizer Controls
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl font-black">{hackathonSession.submissionCount}</span>
+                          <span className="text-xs font-bold uppercase text-[var(--muted)]">
+                            {hackathonSession.submissionCount === 1 ? "Project" : "Projects"} Submitted
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          onClick={() => setShowQrModal(true)}
+                          className="border-2 border-[var(--border)] bg-white px-4 py-2 text-xs font-bold uppercase hover:bg-gray-100 transition-colors flex items-center gap-2"
+                        >
+                          <QrCodeIcon />
+                          View QR Code & Link
+                        </button>
+                        <a
+                          href="/hackathon/dashboard"
+                          className="border-2 border-[var(--border)] bg-white px-4 py-2 text-xs font-bold uppercase hover:bg-gray-100 transition-colors"
+                        >
+                          View Submissions
+                        </a>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -324,6 +448,90 @@ export default function EventDetailPage() {
           <a href="#" className="hover:text-[var(--foreground)] transition-colors">Terms_of_Service</a>
         </div>
       </footer>
+
+      {/* QR Code Modal */}
+      {showQrModal && hackathonSession && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+          <div className="bg-white border-2 border-[var(--border)] max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b-2 border-[var(--border)] px-5 py-4">
+              <div className="flex items-center gap-2">
+                <QrCodeIcon />
+                <h2 className="text-lg font-black uppercase">Hackathon Submission</h2>
+              </div>
+              <button 
+                onClick={() => setShowQrModal(false)}
+                className="p-1 hover:bg-gray-100 transition-colors"
+              >
+                <CloseIcon />
+              </button>
+            </div>
+
+            <div className="p-5">
+              <div className="flex items-center justify-center gap-3 bg-[var(--accent)] border-2 border-[var(--border)] p-4 mb-6">
+                <span className="text-3xl font-black">{hackathonSession.submissionCount}</span>
+                <span className="text-sm font-bold uppercase">
+                  {hackathonSession.submissionCount === 1 ? "Project" : "Projects"} Submitted
+                </span>
+              </div>
+
+              <div className="space-y-4 text-sm font-mono mb-6">
+                <div className="flex justify-between items-start">
+                  <span className="text-[var(--muted)]">Event:</span>
+                  <span className="font-bold text-right max-w-[200px]">{hackathonSession.eventName}</span>
+                </div>
+                <div className="flex justify-between items-start">
+                  <span className="text-[var(--muted)]">Submissions Open:</span>
+                  <span className="font-bold">{new Date(hackathonSession.startDate).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-start">
+                  <span className="text-[var(--muted)]">Deadline:</span>
+                  <span className="font-bold">{new Date(hackathonSession.endDate).toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="border-t-2 border-[var(--border)] pt-5">
+                <h3 className="text-xs font-bold uppercase mb-3 text-[var(--muted)]">Submission URL</h3>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={getSubmitUrl()}
+                    className="flex-1 border-2 border-[var(--border)] px-3 py-2 text-sm font-mono bg-gray-50 truncate"
+                  />
+                  <button
+                    onClick={copyToClipboard}
+                    className="border-2 border-[var(--border)] px-4 py-2 text-sm font-bold hover:bg-gray-100 transition-colors flex items-center gap-2 flex-shrink-0"
+                  >
+                    {copied ? <CheckIcon /> : <CopyIcon />}
+                    {copied ? "COPIED" : "COPY"}
+                  </button>
+                </div>
+                <p className="text-xs text-[var(--muted)] mt-2">
+                  Share this link with participants to submit their projects.
+                </p>
+              </div>
+
+              <div className="border-t-2 border-[var(--border)] pt-5 mt-5">
+                <h3 className="text-xs font-bold uppercase mb-4 text-[var(--muted)]">QR Code</h3>
+                <div 
+                  className="flex justify-center p-6 bg-white border-2 border-[var(--border)]"
+                  dangerouslySetInnerHTML={{ __html: hackathonSession.qrCodeSvg }}
+                />
+                <p className="text-xs text-[var(--muted)] text-center mt-3">
+                  Participants can scan this QR code to submit their projects.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowQrModal(false)}
+                className="w-full mt-6 border-2 border-[var(--border)] py-3 text-sm font-black uppercase tracking-wide hover:bg-gray-100 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
