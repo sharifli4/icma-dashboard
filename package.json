@@ -30,6 +30,7 @@
     "@mikro-orm/core": "^6.6.9",
     "@mikro-orm/migrations": "^6.6.9",
     "@mikro-orm/postgresql": "^6.6.9",
+    "@vercel/analytics": "^2.0.1",
     "bcryptjs": "^3.0.3",
     "next": "16.1.6",
     "next-auth": "^4.24.13",
