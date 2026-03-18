@@ -49,7 +49,11 @@ export default function HackathonAdminPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ eventName, startDate, endDate }),
+        body: JSON.stringify({
+          eventName,
+          startDate: new Date(startDate).toISOString(),
+          endDate: new Date(endDate).toISOString(),
+        }),
       });
 
       const json = await response.json();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useCallback, useEffect, useState, use } from "react";
 import type { HackathonSessionStatus, HackathonSubmissionData } from "@/shared/hackathon/contracts";
 
 function UploadIcon() {
@@ -52,23 +52,26 @@ export default function HackathonSubmitPage({ params }: PageProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitResult, setSubmitResult] = useState<HackathonSubmissionData | null>(null);
 
-  useEffect(() => {
-    async function fetchStatus() {
-      try {
-        const response = await fetch(`/api/hackathon/sessions/${token}/status`);
-        const json = await response.json();
-        if (!response.ok) {
-          throw new Error(json.error || "Failed to fetch session");
-        }
-        setStatus(json.data);
-      } catch (err) {
-        setStatusError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoadingStatus(false);
+  const fetchStatus = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/hackathon/sessions/${token}/status`);
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || "Failed to fetch session");
       }
+      setStatus(json.data);
+    } catch (err) {
+      setStatusError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoadingStatus(false);
     }
-    fetchStatus();
   }, [token]);
+
+  useEffect(() => {
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchStatus]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,6 +81,14 @@ export default function HackathonSubmitPage({ params }: PageProps) {
     setSubmitError(null);
 
     try {
+      // Re-check session status before submitting to avoid stale state
+      const statusRes = await fetch(`/api/hackathon/sessions/${token}/status`);
+      const statusJson = await statusRes.json();
+      if (statusRes.ok && !statusJson.data.isActive) {
+        setStatus(statusJson.data);
+        return;
+      }
+
       const formData = new FormData();
       formData.append("projectName", projectName);
       formData.append("team", team);
