@@ -94,6 +94,16 @@ export async function getSession(idOrToken: string): Promise<HackathonSessionDat
   return toSessionData(session);
 }
 
+export async function deleteSession(id: number): Promise<void> {
+  const orm = await getORM();
+  const em = orm.em.fork();
+  const session = await em.findOne<HackathonSubmissionSession>("HackathonSubmissionSession", { id });
+  if (!session) {
+    throw new HackathonServiceError("Session not found", 404);
+  }
+  await em.removeAndFlush(session);
+}
+
 export async function getSessionStatus(token: string): Promise<HackathonSessionStatus> {
   if (!nonEmptyString(token)) {
     throw new HackathonServiceError("Token is required", 400);

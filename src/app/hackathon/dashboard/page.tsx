@@ -45,6 +45,7 @@ export default function HackathonDashboardPage() {
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDeleteToken, setConfirmDeleteToken] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSessions();
@@ -86,6 +87,25 @@ export default function HackathonDashboardPage() {
   const handleSessionSelect = (session: HackathonSessionData) => {
     setSelectedSession(session);
     fetchSubmissions(session.token);
+  };
+
+  const handleDeleteSession = async (token: string) => {
+    try {
+      const res = await fetch(`/api/hackathon/sessions/${token}`, { method: "DELETE" });
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error || "Failed to delete session");
+      }
+      setSessions((prev) => prev.filter((s) => s.token !== token));
+      if (selectedSession?.token === token) {
+        setSelectedSession(null);
+        setSubmissions([]);
+      }
+      setConfirmDeleteToken(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+      setConfirmDeleteToken(null);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -131,31 +151,60 @@ export default function HackathonDashboardPage() {
           ) : (
             <div className="space-y-2">
               {sessions.map((session) => (
-                <button
-                  key={session.id}
-                  onClick={() => handleSessionSelect(session)}
-                  className={`w-full text-left p-3 border-2 transition-colors ${
-                    selectedSession?.id === session.id
-                      ? "bg-[var(--accent)] border-[var(--border)]"
-                      : "border-[var(--border)] hover:bg-gray-50"
-                  }`}
-                >
-                  <div className="font-bold text-sm uppercase truncate">{session.eventName}</div>
-                  <div className="text-xs text-[var(--muted)] mt-1">
-                    {new Date(session.startDate).toLocaleDateString()}
-                  </div>
-                  <div className="mt-2">
-                    <span
-                      className={`text-xs font-bold px-2 py-0.5 border ${
-                        isSessionActive(session)
-                          ? "border-green-500 text-green-700 bg-green-50"
-                          : "border-gray-400 text-gray-600 bg-gray-50"
-                      }`}
+                <div key={session.id} className="relative">
+                  <button
+                    onClick={() => handleSessionSelect(session)}
+                    className={`w-full text-left p-3 border-2 ${
+                      selectedSession?.id === session.id
+                        ? "bg-[var(--accent)] border-[var(--border)]"
+                        : "border-[var(--border)] hover:bg-gray-50"
+                    }`}
+                  >
+                    <div className="font-bold text-sm uppercase truncate pr-6">{session.eventName}</div>
+                    <div className="text-xs text-[var(--muted)] mt-1">
+                      {new Date(session.startDate).toLocaleDateString()}
+                    </div>
+                    <div className="mt-2">
+                      <span
+                        className={`text-xs font-bold px-2 py-0.5 border ${
+                          isSessionActive(session)
+                            ? "border-green-500 text-green-700 bg-green-50"
+                            : "border-gray-400 text-gray-600 bg-gray-50"
+                        }`}
+                      >
+                        {isSessionActive(session) ? "ACTIVE" : "CLOSED"}
+                      </span>
+                    </div>
+                  </button>
+                  {confirmDeleteToken === session.token ? (
+                    <div className="absolute top-2 right-2 flex items-center gap-1">
+                      <button
+                        onClick={() => handleDeleteSession(session.token)}
+                        className="border-2 border-red-500 bg-red-500 text-white px-2 py-0.5 text-[10px] font-bold uppercase hover:bg-red-600 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
+                      >
+                        YES
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteToken(null)}
+                        className="border-2 border-[var(--border)] px-2 py-0.5 text-[10px] font-bold uppercase text-[var(--muted)] hover:bg-gray-100 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
+                      >
+                        NO
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDeleteToken(session.token)}
+                      className="absolute top-2 right-2 border-2 border-[var(--border)] p-1 text-[var(--muted)] hover:bg-red-600 hover:text-white hover:border-red-600 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
+                      title="Delete session"
                     >
-                      {isSessionActive(session) ? "ACTIVE" : "CLOSED"}
-                    </span>
-                  </div>
-                </button>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                        <path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
           )}
