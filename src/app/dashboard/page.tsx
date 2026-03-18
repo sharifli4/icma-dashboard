@@ -80,12 +80,12 @@ function ImageIcon() {
   );
 }
 
-function DotsIcon() {
+function TrashIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="5" r="1" />
-      <circle cx="12" cy="12" r="1" />
-      <circle cx="12" cy="19" r="1" />
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
     </svg>
   );
 }
@@ -138,9 +138,12 @@ function DashboardContent() {
     setEventsLoaded(true);
   }, []);
 
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+
   const handleDeleteEvent = async (id: number) => {
     const res = await fetch(`/api/events/${id}`, { method: "DELETE" });
     if (res.ok) setEvents((prev) => prev.filter((e) => e.id !== id));
+    setConfirmDeleteId(null);
   };
 
   const handleToggleStatus = async (id: number, current: string) => {
@@ -519,7 +522,7 @@ function DashboardContent() {
               </div>
 
               {/* Table Header */}
-              <div className="grid grid-cols-[80px_1fr_120px_60px_30px] items-center text-xs font-bold uppercase tracking-wider text-[var(--muted)] border-b-2 border-[var(--border)] pb-3 mb-1">
+              <div className="grid grid-cols-[80px_1fr_120px_60px_80px] items-center text-xs font-bold uppercase tracking-wider text-[var(--muted)] border-b-2 border-[var(--border)] pb-3 mb-1">
                 <span>Status</span>
                 <span>Event Title</span>
                 <span>Date</span>
@@ -531,7 +534,7 @@ function DashboardContent() {
               {!eventsLoaded ? (
                 <>
                   {[...Array(4)].map((_, i) => (
-                    <div key={i} className="grid grid-cols-[80px_1fr_120px_60px_30px] items-center py-4 border-b border-gray-100">
+                    <div key={i} className="grid grid-cols-[80px_1fr_120px_60px_80px] items-center py-4 border-b border-gray-100">
                       <div className="w-12 h-5 bg-gray-200 animate-pulse rounded" />
                       <div className="h-4 bg-gray-200 animate-pulse rounded w-3/4" />
                       <div className="h-3 bg-gray-100 animate-pulse rounded w-20" />
@@ -546,7 +549,7 @@ function DashboardContent() {
                 paginatedEvents.map((event) => (
                   <div
                     key={event.id}
-                    className="grid grid-cols-[80px_1fr_120px_60px_30px] items-center py-4 border-b border-gray-200 last:border-b-0"
+                    className="grid grid-cols-[80px_1fr_120px_60px_80px] items-center py-4 border-b border-gray-200 last:border-b-0"
                   >
                     <span>
                       <button
@@ -562,13 +565,30 @@ function DashboardContent() {
                       {new Date(event.dateTime).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </span>
                     <span className="text-sm font-black">{event.upvotes}</span>
-                    <button
-                      onClick={() => handleDeleteEvent(event.id)}
-                      className="flex items-center justify-center hover:bg-red-100 rounded p-1 transition-colors"
-                      title="Delete event"
-                    >
-                      <DotsIcon />
-                    </button>
+                    {confirmDeleteId === event.id ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleDeleteEvent(event.id)}
+                          className="text-[10px] font-bold text-red-600 hover:bg-red-100 px-1.5 py-0.5 transition-colors"
+                        >
+                          YES
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="text-[10px] font-bold text-[var(--muted)] hover:bg-gray-100 px-1.5 py-0.5 transition-colors"
+                        >
+                          NO
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDeleteId(event.id)}
+                        className="flex items-center justify-center hover:bg-red-100 rounded p-1 transition-colors text-[var(--muted)] hover:text-red-600"
+                        title="Delete event"
+                      >
+                        <TrashIcon />
+                      </button>
+                    )}
                   </div>
                 ))
               )}
