@@ -149,26 +149,19 @@ export default function HackathonSubmitPage({ params }: PageProps) {
 
   if (!status) return null;
 
-  if (!status.isActive) {
-    const now = new Date();
-    const start = new Date(status.startDate);
-    const end = new Date(status.endDate);
-    const notStarted = now < start;
+  const notStarted = !status.isActive && new Date() < new Date(status.startDate);
+  const closed = !status.isActive && !notStarted;
 
+  if (closed) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 rounded-full border-2 border-[var(--border)] flex items-center justify-center mx-auto mb-4">
             <ClockIcon />
           </div>
-          <h1 className="text-xl font-bold uppercase mb-2">
-            {notStarted ? "Submissions_Not_Open" : "Submissions_Closed"}
-          </h1>
+          <h1 className="text-xl font-bold uppercase mb-2">Submissions_Closed</h1>
           <p className="text-sm text-[var(--muted)] mb-4">
-            {notStarted 
-              ? `Submissions open on ${formatDate(status.startDate)}`
-              : `Submissions closed on ${formatDate(status.endDate)}`
-            }
+            Submissions closed on {formatDate(status.endDate)}
           </p>
           <div className="border-2 border-[var(--border)] p-4 text-left">
             <div className="text-xs font-mono space-y-1">
@@ -254,7 +247,10 @@ export default function HackathonSubmitPage({ params }: PageProps) {
             Submit_Your_Project
           </h1>
           <p className="text-sm text-[var(--muted)]">
-            Submissions close on {formatDate(status.endDate)}
+            {notStarted
+              ? `Submissions open on ${formatDate(status.startDate)}`
+              : `Submissions close on ${formatDate(status.endDate)}`
+            }
           </p>
         </div>
 
@@ -360,10 +356,10 @@ export default function HackathonSubmitPage({ params }: PageProps) {
 
           <button
             type="submit"
-            disabled={submitting || !demoVideo}
+            disabled={submitting || !demoVideo || notStarted}
             className="w-full bg-[var(--accent)] border-2 border-[var(--border)] px-6 py-3 text-sm font-bold uppercase hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? "SUBMITTING..." : "SUBMIT_PROJECT"}
+            {notStarted ? "SUBMISSION_NOT_STARTED" : submitting ? "SUBMITTING..." : "SUBMIT_PROJECT"}
           </button>
         </form>
       </main>
