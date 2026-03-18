@@ -583,7 +583,7 @@ function DashboardContent() {
                     ) : (
                       <button
                         onClick={() => setConfirmDeleteId(event.id)}
-                        className="border-2 border-[var(--border)] p-1 flex items-center justify-center text-[var(--muted)] hover:bg-red-600 hover:text-white hover:border-red-600"
+                        className="border-2 border-[var(--border)] p-1 flex items-center justify-center text-[var(--muted)] hover:bg-red-600 hover:text-white hover:border-red-600 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
                         title="Delete event"
                       >
                         <TrashIcon />
