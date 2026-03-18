@@ -1,0 +1,293 @@
+src/app/hackathon/admin/page.tsx
+  a8c17c32169547b3 54-55
+src/app/hackathon/submit/[token]/page.tsx
+  a8c17c32169547b3 3,55,70,72-74,84-91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "6adb0355f741d77adc55a2f9d643aa8cb847cb9a",
+  "prompts": {
+    "a8c17c32169547b3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dc2dd217-266b-4eaf-81b6-edd67ff95ff3",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Kenan Sharifli <kenansharifov400@gmail.com>",
+      "messages": [
+        {
+          "type": "user",
+          "text": "fix hackathon project submission timeline bug",
+          "timestamp": "2026-03-18T06:01:19.107Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Agent",
+          "input": {
+            "description": "Find hackathon submission timeline code",
+            "prompt": "Find all code related to hackathon project submission timeline in this codebase. Look for:\n1. Files related to hackathon submissions, projects, or timeline\n2. Any components that display or manage submission deadlines/timelines\n3. Any bugs or issues visible in the timeline logic (e.g., date comparisons, timezone issues, off-by-one errors, incorrect status calculations)\n\nSearch thoroughly across the codebase. Report back the relevant file paths, the code sections, and any bugs you identify.",
+            "subagent_type": "Explore"
+          },
+          "timestamp": "2026-03-18T06:01:28.321Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Let me read the key files to understand the actual bug.",
+          "timestamp": "2026-03-18T06:03:08.754Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/home/kenan/repositories/icma-dashboard/src/services/hackathon/submissionService.ts"
+          },
+          "timestamp": "2026-03-18T06:03:09.361Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/home/kenan/repositories/icma-dashboard/src/services/hackathon/sessionService.ts"
+          },
+          "timestamp": "2026-03-18T06:03:09.643Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/home/kenan/repositories/icma-dashboard/src/app/hackathon/submit/[token]/page.tsx"
+          },
+          "timestamp": "2026-03-18T06:03:09.765Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Let me also check the dashboard and the admin page for the timeline logic.",
+          "timestamp": "2026-03-18T06:03:14.392Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/home/kenan/repositories/icma-dashboard/src/app/hackathon/dashboard/page.tsx"
+          },
+          "timestamp": "2026-03-18T06:03:15.316Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/home/kenan/repositories/icma-dashboard/src/app/hackathon/admin/page.tsx"
+          },
+          "timestamp": "2026-03-18T06:03:15.859Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/home/kenan/repositories/icma-dashboard/src/shared/hackathon/contracts.ts"
+          },
+          "timestamp": "2026-03-18T06:03:16.209Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Let me check the `parseDate` function and the entity to understand how dates flow through the system.",
+          "timestamp": "2026-03-18T06:03:19.665Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Grep",
+          "input": {
+            "pattern": "export function parseDate"
+          },
+          "timestamp": "2026-03-18T06:03:20.153Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/home/kenan/repositories/icma-dashboard/src/db/entities/HackathonSubmissionSession.ts"
+          },
+          "timestamp": "2026-03-18T06:03:20.973Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/home/kenan/repositories/icma-dashboard/src/lib/validation.ts"
+          },
+          "timestamp": "2026-03-18T06:03:25.598Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/home/kenan/repositories/icma-dashboard/src/db/migrations/Migration20260315_Initial.ts"
+          },
+          "timestamp": "2026-03-18T06:04:13.608Z"
+        },
+        {
+          "type": "assistant",
+          "text": "I've identified the bugs. There are two main issues:\n\n1. **Timezone mismatch**: The admin page sends `datetime-local` values (e.g., `\"2026-03-20T17:00\"`) without timezone info. The server's `new Date()` interprets them in server timezone (UTC on Vercel), not the admin's local timezone. This shifts the submission window.\n\n2. **Stale session status on submit page**: The session status is fetched once on page load but never refreshed. If the session expires while the user fills out the form, they get a confusing server error instead of seeing the \"Submissions Closed\" UI.\n\nLet me fix both.\n\n**Fix 1**: Convert `datetime-local` values to ISO strings with timezone offset before sending to the server.",
+          "timestamp": "2026-03-18T06:04:35.161Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Edit",
+          "input": {
+            "file_path": "/home/kenan/repositories/icma-dashboard/src/app/hackathon/admin/page.tsx",
+            "new_string": "      const response = await fetch(\"/api/hackathon/sessions\", {\n        method: \"POST\",\n        headers: {\n          \"Content-Type\": \"application/json\",\n        },\n        body: JSON.stringify({\n          eventName,\n          startDate: new Date(startDate).toISOString(),\n          endDate: new Date(endDate).toISOString(),\n        }),\n      });",
+            "old_string": "      const response = await fetch(\"/api/hackathon/sessions\", {\n        method: \"POST\",\n        headers: {\n          \"Content-Type\": \"application/json\",\n        },\n        body: JSON.stringify({ eventName, startDate, endDate }),\n      });",
+            "replace_all": false
+          },
+          "timestamp": "2026-03-18T06:04:37.245Z"
+        },
+        {
+          "type": "assistant",
+          "text": "This ensures the browser converts the `datetime-local` value (local time) to a proper ISO string with UTC offset before sending, so the server always gets unambiguous timestamps.\n\n**Fix 2**: Re-check session status before submission on the submit page, and add periodic status refresh.",
+          "timestamp": "2026-03-18T06:05:11.482Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Edit",
+          "input": {
+            "file_path": "/home/kenan/repositories/icma-dashboard/src/app/hackathon/submit/[token]/page.tsx",
+            "new_string": "  const fetchStatus = async () => {\n    try {\n      const response = await fetch(`/api/hackathon/sessions/${token}/status`);\n      const json = await response.json();\n      if (!response.ok) {\n        throw new Error(json.error || \"Failed to fetch session\");\n      }\n      setStatus(json.data);\n    } catch (err) {\n      setStatusError(err instanceof Error ? err.message : \"An error occurred\");\n    } finally {\n      setLoadingStatus(false);\n    }\n  };\n\n  useEffect(() => {\n    fetchStatus();\n    const interval = setInterval(fetchStatus, 30_000);\n    return () => clearInterval(interval);\n  }, [token]);",
+            "old_string": "  useEffect(() => {\n    async function fetchStatus() {\n      try {\n        const response = await fetch(`/api/hackathon/sessions/${token}/status`);\n        const json = await response.json();\n        if (!response.ok) {\n          throw new Error(json.error || \"Failed to fetch session\");\n        }\n        setStatus(json.data);\n      } catch (err) {\n        setStatusError(err instanceof Error ? err.message : \"An error occurred\");\n      } finally {\n        setLoadingStatus(false);\n      }\n    }\n    fetchStatus();\n  }, [token]);",
+            "replace_all": false
+          },
+          "timestamp": "2026-03-18T06:05:15.138Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Now update the submit handler to re-check status before submitting:",
+          "timestamp": "2026-03-18T06:05:20.600Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Edit",
+          "input": {
+            "file_path": "/home/kenan/repositories/icma-dashboard/src/app/hackathon/submit/[token]/page.tsx",
+            "new_string": "    try {\n      // Re-check session status before submitting to avoid stale state\n      const statusRes = await fetch(`/api/hackathon/sessions/${token}/status`);\n      const statusJson = await statusRes.json();\n      if (statusRes.ok && !statusJson.data.isActive) {\n        setStatus(statusJson.data);\n        return;\n      }\n\n      const formData = new FormData();\n      formData.append(\"projectName\", projectName);\n      formData.append(\"team\", team);\n      formData.append(\"demoUrl\", demoUrl);\n      formData.append(\"githubUrl\", githubUrl);\n      formData.append(\"demoVideo\", demoVideo);",
+            "old_string": "    try {\n      const formData = new FormData();\n      formData.append(\"projectName\", projectName);\n      formData.append(\"team\", team);\n      formData.append(\"demoUrl\", demoUrl);\n      formData.append(\"githubUrl\", githubUrl);\n      formData.append(\"demoVideo\", demoVideo);",
+            "replace_all": false
+          },
+          "timestamp": "2026-03-18T06:05:24.125Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Now let me also add the `useCallback` wrapper since `fetchStatus` is used in the `useEffect` dependency:",
+          "timestamp": "2026-03-18T06:05:30.440Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Edit",
+          "input": {
+            "file_path": "/home/kenan/repositories/icma-dashboard/src/app/hackathon/submit/[token]/page.tsx",
+            "new_string": "import { useCallback, useEffect, useState, use } from \"react\";",
+            "old_string": "import { useEffect, useState, use } from \"react\";",
+            "replace_all": false
+          },
+          "timestamp": "2026-03-18T06:05:31.857Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Edit",
+          "input": {
+            "file_path": "/home/kenan/repositories/icma-dashboard/src/app/hackathon/submit/[token]/page.tsx",
+            "new_string": "  const fetchStatus = useCallback(async () => {",
+            "old_string": "  const fetchStatus = async () => {",
+            "replace_all": false
+          },
+          "timestamp": "2026-03-18T06:05:44.016Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Edit",
+          "input": {
+            "file_path": "/home/kenan/repositories/icma-dashboard/src/app/hackathon/submit/[token]/page.tsx",
+            "new_string": "    } finally {\n      setLoadingStatus(false);\n    }\n  }, [token]);\n\n  useEffect(() => {\n    fetchStatus();\n    const interval = setInterval(fetchStatus, 30_000);\n    return () => clearInterval(interval);\n  }, [fetchStatus]);",
+            "old_string": "    } finally {\n      setLoadingStatus(false);\n    }\n  };\n\n  useEffect(() => {\n    fetchStatus();\n    const interval = setInterval(fetchStatus, 30_000);\n    return () => clearInterval(interval);\n  }, [token]);",
+            "replace_all": false
+          },
+          "timestamp": "2026-03-18T06:05:56.383Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Let me verify the final state of both files.",
+          "timestamp": "2026-03-18T06:07:02.231Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Bash",
+          "input": {
+            "command": "npx tsc --noEmit --pretty 2>&1 | head -30",
+            "description": "Type-check the project",
+            "timeout": 30000
+          },
+          "timestamp": "2026-03-18T06:07:03.176Z"
+        },
+        {
+          "type": "assistant",
+          "text": "No type errors. Here's a summary of the fixes:\n\n**1. Timezone bug** (`src/app/hackathon/admin/page.tsx`): The `datetime-local` input produces strings like `\"2026-03-20T17:00\"` with no timezone. Previously this was sent raw to the server, where `new Date()` interpreted it in the server's timezone (UTC on Vercel), not the admin's. Now the browser converts to a proper ISO string (`new Date(startDate).toISOString()`) before sending, preserving the admin's intended local time.\n\n**2. Stale session status** (`src/app/hackathon/submit/[token]/page.tsx`):\n- Session status now refreshes every 30 seconds, so if the window expires while the form is open, the UI updates to show \"Submissions Closed\"\n- Before submitting, the handler re-checks session status to prevent submitting against an expired session (avoids confusing server error)",
+          "timestamp": "2026-03-18T06:11:05.562Z"
+        },
+        {
+          "type": "user",
+          "text": "push changes",
+          "timestamp": "2026-03-18T06:11:06.973Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Bash",
+          "input": {
+            "command": "git status",
+            "description": "Show working tree status"
+          },
+          "timestamp": "2026-03-18T06:11:11.224Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Bash",
+          "input": {
+            "command": "git diff",
+            "description": "Show staged and unstaged changes"
+          },
+          "timestamp": "2026-03-18T06:11:11.558Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Bash",
+          "input": {
+            "command": "git log --oneline -5",
+            "description": "Show recent commits"
+          },
+          "timestamp": "2026-03-18T06:11:11.964Z"
+        },
+        {
+          "type": "assistant",
+          "text": "These are changes directly on `main`. I'd recommend pushing via a branch/PR rather than directly to main. Want me to create a branch and PR, or push directly to main?",
+          "timestamp": "2026-03-18T06:11:25.000Z"
+        },
+        {
+          "type": "user",
+          "text": "push directly",
+          "timestamp": "2026-03-18T06:36:14.336Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Bash",
+          "input": {
+            "command": "git add src/app/hackathon/admin/page.tsx src/app/hackathon/submit/\\[token\\]/page.tsx && git commit -m \"$(cat <<'EOF'\nfix: hackathon submission timeline timezone and stale status bugs\n\nConvert datetime-local values to ISO strings before sending to server\nto preserve the admin's local timezone. Add periodic session status\nrefresh and pre-submit status check to prevent submissions against\nexpired sessions.\n\nCo-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>\nEOF\n)\" && git push\n",
+            "description": "Stage, commit, and push changes to main"
+          },
+          "timestamp": "2026-03-18T06:36:38.769Z"
+        }
+      ],
+      "total_additions": 33,
+      "total_deletions": 18,
+      "accepted_lines": 18,
+      "overriden_lines": 0
+    }
+  }
+}
