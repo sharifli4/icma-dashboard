@@ -569,13 +569,13 @@ function DashboardContent() {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleDeleteEvent(event.id)}
-                          className="border-2 border-red-500 bg-red-500 text-white px-2 py-0.5 text-[10px] font-bold uppercase hover:bg-red-600 transition-colors"
+                          className="border-2 border-red-500 bg-red-500 text-white px-2 py-0.5 text-[10px] font-bold uppercase hover:bg-red-600"
                         >
                           YES
                         </button>
                         <button
                           onClick={() => setConfirmDeleteId(null)}
-                          className="border-2 border-[var(--border)] px-2 py-0.5 text-[10px] font-bold uppercase text-[var(--muted)] hover:bg-gray-100 transition-colors"
+                          className="border-2 border-[var(--border)] px-2 py-0.5 text-[10px] font-bold uppercase text-[var(--muted)] hover:bg-gray-100"
                         >
                           NO
                         </button>
@@ -583,7 +583,7 @@ function DashboardContent() {
                     ) : (
                       <button
                         onClick={() => setConfirmDeleteId(event.id)}
-                        className="border-2 border-[var(--border)] p-1 flex items-center justify-center text-[var(--muted)] hover:bg-red-600 hover:text-white hover:border-red-600 hover:scale-110 hover:-rotate-6 transition-all"
+                        className="border-2 border-[var(--border)] p-1 flex items-center justify-center text-[var(--muted)] hover:bg-red-600 hover:text-white hover:border-red-600"
                         title="Delete event"
                       >
                         <TrashIcon />
