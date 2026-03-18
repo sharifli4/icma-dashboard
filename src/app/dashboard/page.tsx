@@ -569,13 +569,13 @@ function DashboardContent() {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleDeleteEvent(event.id)}
-                          className="border-2 border-red-500 bg-red-500 text-white px-2 py-0.5 text-[10px] font-bold uppercase hover:bg-red-600"
+                          className="border-2 border-red-500 bg-red-500 text-white px-2 py-0.5 text-[10px] font-bold uppercase hover:bg-red-600 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
                         >
                           YES
                         </button>
                         <button
                           onClick={() => setConfirmDeleteId(null)}
-                          className="border-2 border-[var(--border)] px-2 py-0.5 text-[10px] font-bold uppercase text-[var(--muted)] hover:bg-gray-100"
+                          className="border-2 border-[var(--border)] px-2 py-0.5 text-[10px] font-bold uppercase text-[var(--muted)] hover:bg-gray-100 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
                         >
                           NO
                         </button>
